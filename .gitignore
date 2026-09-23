@@ -1,0 +1,31 @@
+# Dependencies and generated application output
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Local configuration and runtime data
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+.data/
+uploads/
+tmp/
+*.log
+.DS_Store
