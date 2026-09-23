@@ -4,10 +4,10 @@ This is a factual work log, not a claim that every planned feature or verificati
 
 ## Tools actually used in this repository's work
 
-- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, and the initial documentation draft.
+- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, and application bootstrap.
 - **Read-only supporting tools:** PDF text extraction and page rendering, inspection of the supplied email screenshots, official web documentation, and local directory/Git inspection.
 
-The applicant mentioned prior use of Claude Code on other work. **Claude Code has not been used for this repository so far.** No exact model identifier or percentage of AI-written code is asserted. Application code has not yet been written.
+The applicant chose Claude Code for subsequent feature reviews. **No Claude review of this repository has been observed or recorded yet.** No exact model identifier or percentage of AI-written code is asserted.
 
 ## Applicant direction
 
@@ -54,7 +54,33 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification performed:** A read-only Python check passed for the six expected project files, eight local Markdown links/anchors, UTF-8 readability, balanced code fences, explicit not-yet-runnable status, Git ownership restrictions, confirmed intended identity, and the project/brief locations. An initial overly strict parent-folder inventory assertion failed on macOS `.DS_Store`; excluding that OS metadata made the location check accurate. The assistant also reread the current plan, README, AI log, and agent instructions for consistency.
 
-**Handoff status:** Documentation is prepared for applicant review and a user-created commit. No Git repository has been initialized, and the assistant has not staged, committed, or pushed anything. No application tests have run because there is no application code yet.
+**Handoff status at that time:** Documentation was prepared for applicant review and a user-created commit. No Git repository had been initialized, and the assistant had not staged, committed, or pushed anything. No application tests had run because there was no application code yet.
+
+### Session 03 - Application bootstrap
+
+**Task given to AI:** Implement only the next bootstrap milestone on the applicant-created `chore/bootstrap` branch, communicate briefly, and leave staging, commits, and pushes to the applicant.
+
+**Starting state:** Read-only Git inspection found a clean `chore/bootstrap` branch and the applicant's initial documentation commit (`d8db05f`). The configured remote points to the personal repository. The system Node.js was 18.15.0; the assistant selected the separately bundled Node.js 24.19.0 for local checks without changing the machine's global Node setup. Docker Desktop was installed but not running and was started for verification.
+
+**Work performed:** Created a minimal Next.js/React/TypeScript application, shared copy dictionaries for the temporary Arabic page, local branding, explicit lint/type-check commands, a production Dockerfile, Compose health check, and live HTTP smoke tests. Added a GitHub Actions workflow to exercise the same container boundary and CLAUDE.md instructions for the applicant's chosen read-only review workflow. Updated setup instructions and decision D14, and corrected the plan's stale pre-commit status.
+
+**Applicant decision:** The assistant proposed and implemented a small CI workflow during bootstrap. After discussing its behavior, purpose, and GitHub Actions billing, the applicant adopted CI as a project decision and requested that its engineering rationale and trade-offs be documented. D15 records that decision; D16 records the agreed Claude review workflow. Creating either file is not evidence of a hosted CI run or a completed Claude review.
+
+**Scope control:** No authentication, database, seed, imports, quiz features, or language selector were implemented. Those remain separate milestones. The smoke checks target startup and asset packaging; they do not establish quiz correctness, accessibility, or authorization.
+
+**Correction from tool evidence:** An ESLint 9 support warning prompted a trial upgrade to ESLint 10. The trial failed with incompatible plugin peer ranges and an actual React lint-rule exception. The assistant checked current plugin metadata and restored the compatible ESLint 9 version, recording the support limitation rather than bypassing peer validation. No applicant or Claude finding is being attributed to this correction.
+
+**Verification actually performed:**
+
+- `npm run check`: ESLint and generated-route TypeScript checks passed locally using Node.js 24.19.0.
+- `docker compose config --quiet`: configuration parsed successfully.
+- `docker compose up --build --detach --wait --wait-timeout 120`: built and started a new application container, including `npm ci`, lint/type checks, and the production Next.js build. The container became healthy. This exercised Linux ARM64 through Docker Desktop, with no existing app container or host dependency/build directories copied into the image. It was not a post-commit fresh-checkout test.
+- `npm run test:smoke`: both HTTP checks passed against the running production container (uncached health response, Arabic page, and public/compiled assets).
+- `docker compose exec -T app id` and `node --version`: confirmed non-root UID 1000 and Node.js 24.19.0.
+- `npm audit --audit-level=high`: reported zero known vulnerabilities at the time of the check; this is not a security guarantee.
+- Package/lock consistency, workflow YAML, Markdown links/fences, and `git diff --check` passed. The first auxiliary documentation-check attempt could not load Python's optional YAML module; the check was rerun successfully using the already installed JavaScript YAML parser, without adding a dependency.
+
+**Remaining verification and handoff:** The applicant requested ownership of opening the app and checking its interface. No successful browser or phone visual inspection is claimed. No Claude review, hosted CI run, or applicant code review has been claimed. The application was left running at `http://localhost:3000` for the applicant. The assistant has not staged, committed, or pushed any change.
 
 ## Implementation workflow
 

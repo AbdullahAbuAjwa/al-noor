@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **Implementation is pending.** The verification items below describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **Bootstrap is implemented and locally verified; business features remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. This record distinguishes those from engineering assumptions. Accepted plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -148,11 +148,47 @@ Use a restrained teal/warm-white visual palette, consistent educational icons, r
 
 **Why / trade-off:** The applicant retains control of the repository history and publication. Personal and employer accounts coexist on the machine, so verify commit author settings separately from the credentials used by the selected Git remote/transport. An active `gh` account alone does not establish which identity a later Git push will use. Do not silently change global settings.
 
-**Verify:** The applicant confirmed the personal GitHub account and author email in the discussion. Project configuration and effective remote authentication remain to be checked before publishing. No staging, commit, push, account switch, or repository initialization has occurred in this first step.
+**Verification update:** The applicant confirmed the personal identity and subsequently initialized the repository and created the initial documentation commit. Read-only inspection found `d8db05f` and an `origin` URL under `AbdullahAbuAjwa/al-noor`. This proves the configured destination, not the identity of future Git authentication. The assistant has not staged, committed, pushed, or switched accounts.
+
+## D14 - Bootstrap scope, build, and review checks
+
+**Basis:** Milestone 2 requires a runnable foundation and one-command startup. The applicant requested one step at a time and chose feature branches with a later Claude review.
+
+**Decision:** Bootstrap Next.js App Router with TypeScript strict mode, pinned direct dependencies and an npm lockfile. Use Node.js 24 LTS, matching Node types, TypeScript 5.9, and ESLint 9 with Next's matching ESLint config. TypeScript 5.9 is a conservative supported-by-the-framework choice; the build and type checks must confirm compatibility. Reject an unsupported host Node major via npm engines and document the container route independently.
+
+**Lint compatibility finding:** npm marks ESLint 9.39.5 unsupported. Trying ESLint 10.11.0 produced peer conflicts and an actual `react/display-name` crash. The registry confirmed that the latest React, JSX accessibility, and import plugins still declare support only through ESLint 9. Retain 9.39.5 as a documented development-tool limitation; do not hide peer errors with `--force` or `--legacy-peer-deps`. Revisit ESLint 10 once the plugin chain supports it. This limitation does not remove linting from the build.
+
+Use a multi-stage Docker build and Next's standalone output. Explicitly copy both public files and compiled static assets into the runtime image, run as the image's existing non-root `node` user, and bind the Compose host port to loopback by default. No database volume or pretend initialization script is added until the data milestone can implement and test its real behavior. Pin the base image to a Node patch tag and verified multi-platform digest so OS layers cannot silently change on the next build. Updating the image is then an explicit change. Local development uses `npm run dev`; production is served by the container's generated standalone server.
+
+**Why / trade-off:** A production container exercises the actual distribution boundary early and requires no host Node.js or cloud credentials. Debian slim is a straightforward base for upcoming database tooling; changing to a smaller Alpine image is not worth adding native-library compatibility uncertainty now. System fonts and bundled assets avoid remote font calls during build or page rendering. The welcome page is temporary, Arabic, responsive, and explicitly says the platform is being prepared; language selection belongs to the UI milestone.
+
+**Verification strategy:** Lint and type-check during every container build, then build for production. HTTP smoke tests check the live endpoint, page direction, and delivery of the real static assets, including assets that standalone packaging can omit. Unit tests around static text or an unconditional health response would add little evidence; quiz rules will receive unit/integration tests with their features. GitHub Actions is configured to repeat the container smoke checks on PRs and `main`, with read-only repository permissions and no publishing step. A hosted CI run and a Claude review remain unverified until they actually occur.
+
+**Sources:** [Next.js installation](https://nextjs.org/docs/app/getting-started/installation), [standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output), and [Node.js release support](https://nodejs.org/en/about/previous-releases). Package versions were checked against the public npm registry. Actual local checks are recorded in AI_USAGE.md.
+
+## D15 - Automated checks on GitHub
+
+**Context:** The brief requires reproducible startup and automated tests but does not require CI. Local checks alone do not establish that the application builds and starts on a separate machine.
+
+**Decision and reason:** I chose to add a small GitHub Actions workflow that runs the production container build, lint/type checks, and HTTP smoke tests on pull requests and pushes to `main`. This gives each proposed change repeatable verification on a separate machine, makes failures visible during review, and supports the one-command startup requirement. Reusing the same Compose setup and smoke tests keeps local and CI verification aligned. The workflow verifies the application; it does not deploy it.
+
+**Alternative considered:** Keep all checks manual and local. That would avoid maintaining a workflow, but would make verification depend on remembering to rerun commands and on the developer's existing environment. A small CI workflow is a proportionate addition for this assessment.
+
+**Trade-off / evidence:** CI adds configuration to maintain and time waiting for checks. It supplements local testing and review; it does not replace them or automatically prevent a merge. The workflow file exists, but a successful hosted run remains unverified until the applicant pushes it and checks the result.
+
+## D16 - Persistent instructions for Claude review
+
+**Origin:** The applicant proposed using Claude Code for code review, and that workflow was discussed and agreed before `CLAUDE.md` was added. The brief welcomes such an instruction file but does not require one.
+
+**Decision and reason:** Keep a short `CLAUDE.md` that points to the shared repository instructions and defines a read-only reviewer role. It asks Claude to include untracked files, assess the current milestone, and report concrete findings with evidence. Persistent instructions reduce repeated prompting and keep review expectations consistent.
+
+**Trade-off / evidence:** The file must stay aligned with AGENTS.md and the agreed workflow. It guides behavior; it is not a technical permission boundary or evidence that a review happened. The applicant assesses findings, and actual review outcomes are recorded in AI_USAGE.md after review.
 
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
+
+GitHub CI and persistent Claude review instructions are delivery-workflow additions; their distinct origins and trade-offs are recorded in D15 and D16.
 
 ## Deliberately omitted from the core
 
@@ -165,7 +201,7 @@ English interface selection, an explicit administrator role, draft/publication w
 
 ## Unfinished work
 
-All application implementation and tests are currently unfinished. See [PLAN.md](PLAN.md) for the milestones. Replace this statement with the actual remaining gaps as work progresses.
+Bootstrap build/startup and HTTP smoke verification passed locally on Linux ARM64 through Docker Desktop. Applicant visual inspection, Claude review, and hosted CI execution remain pending. All business features and their tests remain unfinished, including persistent data, accounts, imports, quiz authoring, attempts, scoring, reports, and language switching. See [PLAN.md](PLAN.md) for the milestones and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 
