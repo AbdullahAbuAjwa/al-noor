@@ -11,6 +11,46 @@ function request(path, options = {}) {
   });
 }
 
+function postForm(path, fields, headers = {}) {
+  return request(path, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded", ...headers },
+    body: new URLSearchParams(fields).toString(),
+    redirect: "manual",
+  });
+}
+
+function sessionCookie(response) {
+  const match = (response.headers.get("set-cookie") ?? "").match(
+    /al_noor_session=([^;]*)/,
+  );
+  return match?.[1] ? `al_noor_session=${match[1]}` : null;
+}
+
+const demoAccounts = [
+  {
+    username: "student.10a.01",
+    password: "StudentDemo2026!",
+    home: "/student",
+    visible: "رياضيات الصف العاشر: حساب وجبر",
+    hidden: ["علوم الصف العاشر: مفاهيم أساسية", "مسودة: مراجعة تاريخية قصيرة"],
+  },
+  {
+    username: "teacher.math",
+    password: "TeacherDemo2026!",
+    home: "/teacher",
+    visible: "math-10a-demo",
+    hidden: ["science-10b-demo", "history-10a-draft"],
+  },
+  {
+    username: "admin",
+    password: "AdminDemo2026!",
+    home: "/admin",
+    visible: "نظرة عامة على المركز",
+    hidden: [],
+  },
+];
+
 test("the running server exposes an uncached health response", async () => {
   const response = await request("/api/health");
   assert.equal(response.status, 200);
@@ -61,8 +101,18 @@ test("language selection persists and invalid locale values fall back safely", a
   assert.equal(english.status, 200);
   const englishHtml = await english.text();
   assert.match(englishHtml, /<html[^>]*lang="en"[^>]*dir="ltr"/);
-  assert.match(englishHtml, /Your learning space is on its way/);
+  assert.match(englishHtml, /Short quizzes, clear results/);
   assert.match(englishHtml, /<title>Al Noor Educational Center<\/title>/);
+
+  // Switching language returns to the page it was used on, never off-site.
+  const fromLogin = await postForm("/api/locale", { locale: "ar", returnTo: "/login" });
+  assert.equal(fromLogin.status, 303);
+  assert.equal(fromLogin.headers.get("location"), "/login");
+  const offSite = await postForm("/api/locale", {
+    locale: "ar",
+    returnTo: "//evil.example/",
+  });
+  assert.equal(offSite.headers.get("location"), "/");
 
   const invalid = await request("/api/locale", {
     method: "POST",
@@ -78,4 +128,78 @@ test("language selection persists and invalid locale values fall back safely", a
   });
   assert.equal(fallback.status, 200);
   assert.match(await fallback.text(), /<html[^>]*lang="ar"[^>]*dir="rtl"/);
+});
+
+test("protected areas require a session and redirect relatively to the login page", async () => {
+  for (const path of ["/student", "/teacher", "/admin"]) {
+    const response = await request(path, { redirect: "manual" });
+    assert.equal(response.status, 307, path);
+    assert.equal(response.headers.get("location"), `/login?next=${encodeURIComponent(path)}`);
+  }
+  const login = await request("/login");
+  assert.equal(login.status, 200);
+  const html = await login.text();
+  assert.match(html, /<html[^>]*lang="ar"[^>]*dir="rtl"/);
+  assert.match(html, /name="username"/);
+  assert.match(html, /autoComplete="current-password"|autocomplete="current-password"/);
+});
+
+test("a failed or cross-site sign-in never issues a session", async () => {
+  // An unknown account keeps demo accounts free of throttling between runs.
+  const wrong = await postForm("/api/auth/login", {
+    username: "smoke.unknown.account",
+    password: "not-the-password",
+  });
+  assert.equal(wrong.status, 303);
+  assert.match(wrong.headers.get("location") ?? "", /^\/login\?error=(invalid|throttled)$/);
+  assert.equal(sessionCookie(wrong), null);
+
+  const crossSite = await postForm(
+    "/api/auth/login",
+    { username: "admin", password: "AdminDemo2026!" },
+    { origin: "http://evil.example" },
+  );
+  assert.equal(crossSite.status, 403);
+  assert.equal(sessionCookie(crossSite), null);
+});
+
+test("each demo role reaches only its own area, and sign-out ends the session", async () => {
+  for (const account of demoAccounts) {
+    const login = await postForm("/api/auth/login", {
+      username: account.username,
+      password: account.password,
+      next: "/admin",
+    });
+    assert.equal(login.status, 303, account.username);
+    // A requested page outside the account's own area is ignored.
+    assert.equal(login.headers.get("location"), account.home);
+    const setCookie = login.headers.get("set-cookie") ?? "";
+    assert.match(setCookie, /httponly/i);
+    assert.match(setCookie, /samesite=lax/i);
+    const cookie = sessionCookie(login);
+    assert.ok(cookie, "login must issue a session cookie");
+
+    const home = await request(account.home, { headers: { cookie } });
+    assert.equal(home.status, 200);
+    const html = await home.text();
+    assert.ok(html.includes(account.visible), `${account.home} shows its own data`);
+    for (const text of account.hidden) {
+      assert.ok(!html.includes(text), `${account.home} must not show ${text}`);
+    }
+    assert.ok(!html.includes("scrypt$"), "password hashes never reach a page");
+
+    for (const other of ["/student", "/teacher", "/admin"]) {
+      if (other === account.home) continue;
+      const denied = await request(other, { headers: { cookie }, redirect: "manual" });
+      assert.equal(denied.status, 307, `${account.username} -> ${other}`);
+      assert.equal(denied.headers.get("location"), account.home);
+    }
+
+    const logout = await postForm("/api/auth/logout", {}, { cookie });
+    assert.equal(logout.status, 303);
+    assert.equal(logout.headers.get("location"), "/login?signedOut=1");
+    assert.match(logout.headers.get("set-cookie") ?? "", /al_noor_session=;/);
+    const reused = await request(account.home, { headers: { cookie }, redirect: "manual" });
+    assert.equal(reused.status, 307, "a signed-out cookie must not work again");
+  }
 });

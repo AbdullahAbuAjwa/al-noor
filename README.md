@@ -2,11 +2,11 @@
 
 A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
-**Current status: database, demo data, operator imports, and bilingual UI foundation.** The application has persistent SQLite storage, automatic first-use demo data, CSV/XLSX command-line imports, a responsive Arabic/English welcome page with a persistent language switch, and a database readiness endpoint. Login and interactive quiz workflows are not available yet.
+**Current status: sign-in and role-based access.** The application has persistent SQLite storage, automatic first-use demo data, CSV/XLSX command-line imports, a responsive Arabic/English interface, and sign-in for students, teachers, and the centre administrator. Each role lands on its own page with data scoped to that account. Taking a quiz, quiz authoring, grading, and detailed reports are not available yet.
 
 **Planning came first.** Before writing application code, Abdullah spent substantial time working through the complete client brief with **ChatGPT Codex**. He challenged assumptions and decided the scope, architecture, role boundaries, timing and grading behavior, import rules, edge cases, delivery order, and verification strategy. [PLAN.md](PLAN.md) and [DECISIONS.md](DECISIONS.md) were the starting point for implementation and continue to evolve as tests and reviews provide evidence. Deliberate planning before coding is part of how he approaches projects generally, especially when using AI tools.
 
-**AI-assisted engineering workflow:** Abdullah defines the scope and makes the technical decisions, uses **ChatGPT Codex** to help implement them, then reviews each feature PR himself with **Claude Code** as a read-only review assistant. He evaluates its findings and uses tests appropriate to each feature; GitHub Actions is configured to run the production build and checks on PRs. This follows his usual team-project discipline of feature branches, PR review, and tests alongside implementation. In this solo assessment, Claude Code supports his self-review; it is not a teammate's approval. [AI_USAGE.md](AI_USAGE.md) records what was actually done and verified.
+**AI-assisted engineering workflow:** Abdullah defines the scope and makes the technical decisions. Through the bilingual UI milestone he used **ChatGPT Codex** to help implement and reviewed each feature PR himself with **Claude Code** as a read-only review assistant. From the authentication milestone onward he directs **Claude Code** to implement the remaining features, while he still stages, commits, pushes, and merges every change and checks the interface himself. Claude Code's checks of its own code are not an independent review. Tests are added with each feature, and GitHub Actions is configured to run the production build and checks on PRs. [AI_USAGE.md](AI_USAGE.md) records what was actually done and verified.
 
 ## Planned experience
 
@@ -26,7 +26,15 @@ docker compose up --build
 
 Open [http://localhost:3000](http://localhost:3000) once the server is ready. The first build downloads the base image and npm packages, so it requires internet access and can take several minutes. No host Node.js installation, environment file, cloud account, or private credentials are required. The container runs the production build as a non-root user.
 
-The welcome page opens in Arabic. Its language button switches to English or back to Arabic and remembers the choice on this browser. The document direction and page title follow the selected language. The page includes a keyboard skip link and respects reduced-motion settings. This preference is independent of the later login feature.
+The interface opens in Arabic. The language button switches to English or back to Arabic, stays on the current page, and remembers the choice on this browser. The document direction and page title follow the selected language. Pages include a keyboard skip link and respect reduced-motion settings.
+
+Choose **Sign in** (or open `/login`) and use one of the demo accounts below. Each role lands on its own page:
+
+- **Student** (`/student`): published quizzes for the student's class, with opening/closing times (Amman time), duration, question count, negative-marking rule, and status. Starting a quiz arrives with the next milestone.
+- **Teacher** (`/teacher`): only that teacher's quizzes and drafts, with classes, window, settings, and the number of finished attempts.
+- **Administrator** (`/admin`): centre totals and students per class.
+
+Opening another role's page sends the account back to its own page; a signed-out visitor is sent to the sign-in page. **Sign out** ends the session on the server. A session lasts at most 12 hours. After five wrong passwords for one username within ten minutes, that username must wait one minute before trying again.
 
 Stop with `Ctrl+C`, or run `docker compose down` from another terminal. If port 3000 is occupied, use `APP_PORT=3001 docker compose up --build` and open `http://localhost:3001` instead (POSIX shell syntax). Compose binds the port to the local machine only.
 
@@ -42,7 +50,7 @@ The demo creates 60 students across `10A`, `10B`, and `11A`, four teachers, one 
 | Teacher (math; classes 10A and 10B) | `teacher.math`   | `TeacherDemo2026!` |
 | Student (class 10A; no attempt)     | `student.10a.01` | `StudentDemo2026!` |
 
-Other teachers are `teacher.science`, `teacher.english`, and `teacher.history`; their demo password is the same teacher password. Student usernames follow `student.<class>.01` through `.20`, for example `student.11a.01`; they share the student demo password. Passwords are stored as salted scrypt hashes. **Login is not implemented yet**, so these accounts are currently database fixtures for the next features, not interactive sign-in options. These documented public credentials are for this assessment demo, not a real deployment.
+Other teachers are `teacher.science`, `teacher.english`, and `teacher.history`; their demo password is the same teacher password. Student usernames follow `student.<class>.01` through `.20`, for example `student.11a.01`; they share the student demo password. Usernames are not case-sensitive at sign-in. Passwords are stored as salted scrypt hashes. These documented public credentials are for this assessment demo, not a real deployment.
 
 For an already migrated local database, `npm run db:seed` initializes the same sample data; rerunning it is safe. Seeding deliberately refuses a database that already contains unmarked user/class/quiz/attempt records instead of mixing a public demo roster with existing data. A fresh Compose volume needs no manual seed command.
 
@@ -107,7 +115,7 @@ The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 r
 5. Sign in as an administrator to inspect center-wide results.
 6. Try both interface languages and a phone-sized viewport.
 
-The seeded accounts and quizzes above will become usable when login and the quiz journeys are implemented. Synthetic completed attempts are separate from each class's primary demo student.
+Today, step 1 and signing in for steps 2, 4, and 5 work; opening, answering, submitting, publishing, and detailed results arrive with the next milestones. Synthetic completed attempts are separate from each class's primary demo student.
 
 ## Verification
 
@@ -119,14 +127,14 @@ npm test
 npm run build
 ```
 
-The Docker build runs lint/type checks, the database integration suite, and the production build, so these checks also work without host Node.js. Database tests apply the committed migrations to isolated temporary files; they never use your configured application database. They cover duplicate/concurrent attempts, invalid relationships, numeric/status constraints, transaction rollback, repeat migration, and persistence after reconnecting. Seed tests cover the roster, demo credentials, sample scores, repeat runs, and refusing an occupied unmarked database. Import tests exercise both formats, real database writes/rollback, authorization of class assignments, malformed inputs, the documented CLI, and the committed templates. To verify the running container:
+The Docker build runs lint/type checks, the test suite, and the production build, so these checks also work without host Node.js. Database tests apply the committed migrations to isolated temporary files; they never use your configured application database. They cover duplicate/concurrent attempts, invalid relationships, numeric/status constraints, transaction rollback, repeat migration, and persistence after reconnecting. Seed tests cover the roster, demo credentials, sample scores, repeat runs, and refusing an occupied unmarked database. Import tests exercise both formats, real database writes/rollback, authorization of class assignments, malformed inputs, the documented CLI, and the committed templates. Authentication tests cover sign-in for each role, hashed session storage, expiry, logout, forged tokens, and login throttling; access tests cover safe redirects, availability boundaries, and role-scoped data; HTTP-guard tests cover cross-site form posts and bounded request bodies. To verify the running container:
 
 ```sh
 docker compose up --build --detach --wait --wait-timeout 120
 docker compose exec -T app node --test scripts/smoke.test.mjs
 ```
 
-The smoke command runs with the container's Node.js 24, so no host Node.js is needed. It checks health, the Arabic HTML, language switching, and delivery of public and compiled static assets. If you run it on the host instead, use `npm run test:smoke` with Node.js 24 and set `APP_URL=http://127.0.0.1:3001` when using another port.
+The smoke command runs with the container's Node.js 24, so no host Node.js is needed. It checks health, the Arabic HTML, language switching and its return path, delivery of public and compiled static assets, and sign-in: signed-out redirects, failed and cross-site logins, each demo role's own page and data, refusal of other roles' pages, and sign-out. It signs in and out with the demo accounts, so it adds and removes session rows in the running database. If you run it on the host instead, use `npm run test:smoke` with Node.js 24 and set `APP_URL=http://127.0.0.1:3001` when using another port.
 
 The GitHub Actions workflow repeats the container build and HTTP smoke checks on pull requests and pushes to `main`. The language smoke check submits the switch form and verifies the resulting cookie, translated page, and document direction. A workflow file is not evidence of a passing hosted run; GitHub execution can only be checked after the applicant pushes it.
 
@@ -144,4 +152,4 @@ Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz uni
 
 ## Current limitations
 
-This is a data and bilingual visual foundation, not a completed assessment. Authentication, browser uploads, interactive quiz behavior, reports, and role-specific navigation remain unimplemented. Foreign keys and checks protect stored relationships; CLI imports enforce teacher/class assignments and create drafts, while web authorization, publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
+This is not yet a completed assessment. Sign-in, sessions, and role-scoped home pages work; taking a timed quiz, autosave, grading, quiz authoring and publication, detailed teacher/administrator results, and browser uploads remain unimplemented. There is no password change or recovery; accounts come from the seed or the import command. Login throttling is per username and in memory (see DECISIONS D23 for its trade-offs). Foreign keys and checks protect stored relationships; CLI imports enforce teacher/class assignments and create drafts, while publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
