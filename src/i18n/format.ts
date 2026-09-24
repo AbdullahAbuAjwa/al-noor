@@ -25,7 +25,12 @@ export function formatList(items: string[], locale: Locale): string {
   return items.join(locale === "ar" ? "، " : ", ");
 }
 
-// Basis points to a compact percentage string, e.g. 2500 -> "25", 1250 -> "12.5".
+// Integer hundredths to a compact decimal string, e.g. 150 -> "1.5", 200 -> "2".
+export function formatHundredths(value: number): string {
+  return String(Number((value / 100).toFixed(2)));
+}
+
+// Basis points (hundredths of a percent) to a percentage, e.g. 2500 -> "25".
 export function formatPercentFromBps(bps: number): string {
-  return String(Number((bps / 100).toFixed(2)));
+  return formatHundredths(bps);
 }

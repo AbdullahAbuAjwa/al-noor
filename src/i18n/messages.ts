@@ -117,8 +117,11 @@ const ar = {
     lockedNote:
       "الاختبار المنشور ثابت حتى لا تتغيّر شروطه على الطلاب. لاختبار معدّل يُنشأ اختبار جديد.",
     notices: {
-      created: "تم إنشاء المسودة.",
+      created: "تم إنشاء المسودة. يمكن الآن إضافة الأسئلة.",
       saved: "تم حفظ الإعدادات.",
+      questionAdded: "تمت إضافة السؤال.",
+      questionSaved: "تم حفظ السؤال.",
+      questionDeleted: "تم حذف السؤال.",
     },
     errors: {
       title: "يُرجى كتابة عنوان من 1 إلى 120 حرفًا.",
@@ -126,7 +129,33 @@ const ar = {
       duration: "يُرجى إدخال مدة من 1 إلى 180 دقيقة.",
       penalty: "يُرجى إدخال نسبة خصم من 0 إلى 100 بمنزلتين عشريتين كحد أقصى.",
       locked: "لا يمكن تعديل اختبار منشور.",
+      questionText: "يُرجى كتابة نص سؤال من 1 إلى 500 حرف.",
+      questionPoints:
+        "يُرجى إدخال علامة من 0.01 إلى 1000 بمنزلتين عشريتين كحد أقصى.",
+      questionOptions:
+        "يُرجى كتابة أربعة خيارات مختلفة وغير فارغة، حتى 200 حرف لكل خيار.",
+      questionCorrect: "يُرجى اختيار الإجابة الصحيحة.",
+      questionLimit: "وصل الاختبار إلى الحد الأقصى وهو 200 سؤال.",
     },
+  },
+  questions: {
+    title: "الأسئلة",
+    empty: "لا توجد أسئلة بعد.",
+    number: (position: number) => `السؤال ${position}`,
+    add: "إضافة سؤال",
+    newTitle: "سؤال جديد",
+    text: "نص السؤال",
+    points: "العلامة",
+    pointsHint: "من 0.01 إلى 1000.",
+    pointsValue: (points: string) => `${points} علامة`,
+    options: "الخيارات",
+    optionsHint: "أربعة خيارات مختلفة. يُحدَّد الخيار الصحيح بالزر المجاور له.",
+    option: (position: number) => `الخيار ${position}`,
+    markCorrect: (position: number) => `الخيار ${position} هو الإجابة الصحيحة`,
+    correct: "الإجابة الصحيحة",
+    edit: "تعديل السؤال",
+    save: "حفظ السؤال",
+    delete: "حذف السؤال",
   },
   notFound: {
     title: "الصفحة غير موجودة",
@@ -256,8 +285,11 @@ const en: Dictionary = {
     lockedNote:
       "A published quiz is fixed so its rules never change for students. Create a new quiz for a revised version.",
     notices: {
-      created: "The draft was created.",
+      created: "The draft was created. Add its questions below.",
       saved: "The settings were saved.",
+      questionAdded: "The question was added.",
+      questionSaved: "The question was saved.",
+      questionDeleted: "The question was deleted.",
     },
     errors: {
       title: "Enter a title of 1 to 120 characters.",
@@ -265,7 +297,35 @@ const en: Dictionary = {
       duration: "Enter a duration from 1 to 180 minutes.",
       penalty: "Enter a penalty from 0 to 100 with at most two decimals.",
       locked: "A published quiz cannot be edited.",
+      questionText: "Enter question text of 1 to 500 characters.",
+      questionPoints:
+        "Enter points from 0.01 to 1000 with at most two decimals.",
+      questionOptions:
+        "Enter four different, non-empty options of up to 200 characters each.",
+      questionCorrect: "Choose the correct answer.",
+      questionLimit: "This quiz has reached the maximum of 200 questions.",
     },
+  },
+  questions: {
+    title: "Questions",
+    empty: "There are no questions yet.",
+    number: (position: number) => `Question ${position}`,
+    add: "Add question",
+    newTitle: "New question",
+    text: "Question text",
+    points: "Points",
+    pointsHint: "From 0.01 to 1000.",
+    pointsValue: (points: string) => `${points} pts`,
+    options: "Options",
+    optionsHint:
+      "Four different options. Mark the correct one with the button beside it.",
+    option: (position: number) => `Option ${position}`,
+    markCorrect: (position: number) =>
+      `Option ${position} is the correct answer`,
+    correct: "Correct answer",
+    edit: "Edit question",
+    save: "Save question",
+    delete: "Delete question",
   },
   notFound: {
     title: "Page not found",

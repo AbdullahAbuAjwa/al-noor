@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestones 1–5 are merged into `main` (latest `d176e91`, authentication and role-based access). Milestone 6 (quiz authoring) is in progress on `feat/quiz-authoring`: a sign-in language fix, then part 1 (draft settings). Attempts, grading, and reports remain pending.
+Current progress: milestones 1–5 are merged into `main` (latest `d176e91`, authentication and role-based access). Milestone 6 (quiz authoring) is in progress on `feat/quiz-authoring`: a sign-in language fix, part 1 (draft settings), and part 2 (question editing). Attempts, grading, and reports remain pending.
 
 ## Objective and source
 

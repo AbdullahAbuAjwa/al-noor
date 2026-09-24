@@ -398,8 +398,114 @@ test(
         await request("/teacher", { headers: { cookie: math } })
       ).text();
       assert.match(list, /Smoke draft \(edited\)/);
+
+      // Questions: add, edit, and delete on the same draft.
+      const quizId = editor.split("/").pop();
+      const questionFields = {
+        text: "Smoke question: 2 + 2?",
+        points: "1.5",
+        option1: "3",
+        option2: "4",
+        option3: "5",
+        option4: "22",
+        correctOption: "2",
+      };
+      const added = await postForm(
+        `/api/teacher/quizzes/${quizId}/questions`,
+        questionFields,
+        { cookie: math },
+      );
+      assert.equal(
+        added.headers.get("location"),
+        `${editor}?notice=questionAdded#questions`,
+      );
+      const withQuestion = await (
+        await request(editor, { headers: { cookie: math } })
+      ).text();
+      const questionId = withQuestion.match(
+        /id="question-([A-Za-z0-9_-]+)"/,
+      )?.[1];
+      assert.ok(questionId, "the added question is listed");
+      const edited = await postForm(
+        `/api/teacher/quizzes/${quizId}/questions/${questionId}`,
+        { ...questionFields, text: "Smoke question (edited)", intent: "save" },
+        { cookie: math },
+      );
+      assert.match(
+        edited.headers.get("location") ?? "",
+        /notice=questionSaved/,
+      );
+      assert.match(
+        await (await request(editor, { headers: { cookie: math } })).text(),
+        /Smoke question \(edited\)/,
+      );
+      const removed = await postForm(
+        `/api/teacher/quizzes/${quizId}/questions/${questionId}`,
+        { intent: "delete" },
+        { cookie: math },
+      );
+      assert.match(
+        removed.headers.get("location") ?? "",
+        /notice=questionDeleted/,
+      );
+      assert.doesNotMatch(
+        await (await request(editor, { headers: { cookie: math } })).text(),
+        /Smoke question/,
+      );
     } finally {
       await signOut(math);
     }
   },
 );
+
+test("question endpoints enforce ownership and never change a published quiz", async () => {
+  const math = await signIn("teacher.math", "TeacherDemo2026!");
+  const science = await signIn("teacher.science", "TeacherDemo2026!");
+  const student = await signIn("student.10a.01", "StudentDemo2026!");
+  const base = "/api/teacher/quizzes/demo-quiz-math-10a-demo/questions";
+  const question = `${base}/demo-question-math-10a-demo-1`;
+  const fields = {
+    text: "Changed",
+    points: "1",
+    option1: "a",
+    option2: "b",
+    option3: "c",
+    option4: "d",
+    correctOption: "1",
+  };
+  try {
+    assert.equal(
+      (await postForm(base, fields, { cookie: student })).status,
+      403,
+    );
+    assert.equal(
+      (await postForm(base, fields, { cookie: science })).status,
+      404,
+    );
+    for (const [path, body] of [
+      [base, fields],
+      [question, { ...fields, intent: "save" }],
+      [question, { intent: "delete" }],
+    ]) {
+      const locked = await postForm(path, body, { cookie: math });
+      assert.equal(locked.status, 303);
+      assert.equal(
+        locked.headers.get("location"),
+        "/teacher/quizzes/demo-quiz-math-10a-demo?error=locked#questions",
+      );
+    }
+    const page = await (
+      await request("/teacher/quizzes/demo-quiz-math-10a-demo", {
+        headers: { cookie: math },
+      })
+    ).text();
+    assert.match(page, /id="question-demo-question-math-10a-demo-15"/);
+    assert.doesNotMatch(
+      page,
+      /name="intent"/,
+      "published questions have no edit forms",
+    );
+  } finally {
+    await Promise.all([math, science, student].map(signOut));
+  }
+});
