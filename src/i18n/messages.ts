@@ -211,9 +211,23 @@ const ar = {
     questionOf: (position: number, total: number) =>
       `السؤال ${position} من ${total}`,
     back: "العودة إلى اختباراتي",
+    savingNote:
+      "تُحفظ كل إجابة على الخادم عند اختيارها، ويمكن تغييرها أو مسحها حتى انتهاء الوقت.",
+    save: "حفظ الإجابة",
+    clear: "مسح الإجابة",
+    saving: "جارٍ الحفظ…",
+    saved: "تم حفظ الإجابة.",
+    cleared: "تم مسح الإجابة.",
+    failed: "لم تُحفظ الإجابة. يُرجى التحقق من الاتصال ثم إعادة المحاولة.",
+    retry: "إعادة المحاولة",
     errors: {
       upcoming: "لم تبدأ فترة هذا الاختبار بعد.",
       closed: "انتهت فترة هذا الاختبار، ولا يمكن بدء محاولة جديدة.",
+      invalid: "تعذّر حفظ هذه الإجابة. يُرجى اختيار أحد الخيارات المعروضة.",
+    },
+    notices: {
+      saved: "تم حفظ الإجابة.",
+      cleared: "تم مسح الإجابة.",
     },
   },
   notFound: {
@@ -441,9 +455,24 @@ const en: Dictionary = {
     questionOf: (position: number, total: number) =>
       `Question ${position} of ${total}`,
     back: "Back to my quizzes",
+    savingNote:
+      "Each answer is saved on the server when you choose it; you can change or clear it until time is up.",
+    save: "Save answer",
+    clear: "Clear answer",
+    saving: "Saving…",
+    saved: "Answer saved.",
+    cleared: "Answer cleared.",
+    failed: "The answer was not saved. Check your connection and try again.",
+    retry: "Try again",
     errors: {
       upcoming: "This quiz has not opened yet.",
       closed: "This quiz has closed, so a new attempt cannot start.",
+      invalid:
+        "This answer could not be saved. Choose one of the options shown.",
+    },
+    notices: {
+      saved: "Answer saved.",
+      cleared: "Answer cleared.",
     },
   },
   notFound: {

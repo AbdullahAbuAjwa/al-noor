@@ -673,11 +673,17 @@ test("students reach only their class's quizzes and attempts", async () => {
     const own = await request(quiz, { headers: { cookie: tenA } });
     assert.equal(own.status, 200);
     assert.match(await own.text(), /رياضيات الصف العاشر/);
-    assert.equal((await request(quiz, { headers: { cookie: tenB } })).status, 404);
+    assert.equal(
+      (await request(quiz, { headers: { cookie: tenB } })).status,
+      404,
+    );
     assert.equal((await postForm(start, {}, { cookie: tenB })).status, 404);
     assert.equal((await postForm(start, {}, { cookie: teacher })).status, 403);
     const signedOut = await postForm(start, {});
-    assert.equal(signedOut.headers.get("location"), `/login?next=${encodeURIComponent(quiz)}`);
+    assert.equal(
+      signedOut.headers.get("location"),
+      `/login?next=${encodeURIComponent(quiz)}`,
+    );
     // No attempt of their own: the attempt page sends them to the quiz page.
     const attempt = await request(`${quiz}/attempt`, {
       headers: { cookie: tenB },
@@ -690,26 +696,138 @@ test("students reach only their class's quizzes and attempts", async () => {
   }
 });
 
-test("starting twice resumes one timed attempt without answer keys", { skip: !allowWrites }, async () => {
-  const cookie = await signIn("student.10a.04", "StudentDemo2026!");
-  const quiz = "/student/quizzes/demo-quiz-math-10a-demo";
-  const start = "/api/student/quizzes/demo-quiz-math-10a-demo/start";
-  try {
-    const first = await postForm(start, {}, { cookie });
-    assert.equal(first.status, 303);
-    assert.equal(first.headers.get("location"), `${quiz}/attempt`);
-    const page = await (await request(`${quiz}/attempt`, { headers: { cookie } })).text();
-    assert.match(page, /role="timer"/);
-    assert.match(page, /id="q-15"/);
-    assert.doesNotMatch(page, /correctOption/);
-    const deadline = page.match(/ينتهي الوقت: ([^<]+)/)?.[1];
-    assert.ok(deadline, "the page shows the fixed deadline");
+test(
+  "starting twice resumes one timed attempt without answer keys",
+  { skip: !allowWrites },
+  async () => {
+    const cookie = await signIn("student.10a.04", "StudentDemo2026!");
+    const quiz = "/student/quizzes/demo-quiz-math-10a-demo";
+    const start = "/api/student/quizzes/demo-quiz-math-10a-demo/start";
+    try {
+      const first = await postForm(start, {}, { cookie });
+      assert.equal(first.status, 303);
+      assert.equal(first.headers.get("location"), `${quiz}/attempt`);
+      const page = await (
+        await request(`${quiz}/attempt`, { headers: { cookie } })
+      ).text();
+      assert.match(page, /role="timer"/);
+      assert.match(page, /id="q-15"/);
+      assert.doesNotMatch(page, /correctOption/);
+      const deadline = page.match(/ينتهي الوقت: ([^<]+)/)?.[1];
+      assert.ok(deadline, "the page shows the fixed deadline");
 
-    const second = await postForm(start, {}, { cookie });
-    assert.equal(second.headers.get("location"), `${quiz}/attempt`);
-    const again = await (await request(`${quiz}/attempt`, { headers: { cookie } })).text();
-    assert.equal(again.match(/ينتهي الوقت: ([^<]+)/)?.[1], deadline, "resuming keeps the deadline");
+      const second = await postForm(start, {}, { cookie });
+      assert.equal(second.headers.get("location"), `${quiz}/attempt`);
+      const again = await (
+        await request(`${quiz}/attempt`, { headers: { cookie } })
+      ).text();
+      assert.equal(
+        again.match(/ينتهي الوقت: ([^<]+)/)?.[1],
+        deadline,
+        "resuming keeps the deadline",
+      );
+    } finally {
+      await signOut(cookie);
+    }
+  },
+);
+
+test("answers can be saved only into the student's own open attempt", async () => {
+  const tenB = await signIn("student.10b.01", "StudentDemo2026!");
+  const teacher = await signIn("teacher.math", "TeacherDemo2026!");
+  const endpoint = "/api/student/quizzes/demo-quiz-math-10a-demo/answers";
+  const fields = {
+    questionId: "demo-question-math-10a-demo-1",
+    optionId: "demo-option-math-10a-demo-1-2",
+  };
+  const json = { accept: "application/json" };
+  try {
+    const noAttempt = await postForm(endpoint, fields, {
+      cookie: tenB,
+      ...json,
+    });
+    assert.equal(noAttempt.status, 404);
+    assert.deepEqual(await noAttempt.json(), { status: "not_found" });
+    assert.equal(
+      (await postForm(endpoint, fields, { cookie: teacher })).status,
+      403,
+    );
+    const crossSite = await postForm(endpoint, fields, {
+      cookie: tenB,
+      origin: "http://evil.example",
+    });
+    assert.equal(crossSite.status, 403);
+    const signedOut = await postForm(endpoint, fields);
+    assert.equal(signedOut.status, 303);
+    assert.match(signedOut.headers.get("location") ?? "", /^\/login\?next=/);
   } finally {
-    await signOut(cookie);
+    await Promise.all([tenB, teacher].map(signOut));
   }
 });
+
+test(
+  "a student saves, changes, and clears answers that survive a reload",
+  { skip: !allowWrites },
+  async () => {
+    // student.10a.04 started this quiz in the earlier write test.
+    const cookie = await signIn("student.10a.04", "StudentDemo2026!");
+    const page = "/student/quizzes/demo-quiz-math-10a-demo/attempt";
+    const endpoint = "/api/student/quizzes/demo-quiz-math-10a-demo/answers";
+    const json = { cookie, accept: "application/json" };
+    const q1 = "demo-question-math-10a-demo-1";
+    // Attribute order is React's choice (it writes checked="" before value).
+    const checked = (html, option) =>
+      /\schecked(?:=|\s|\/|>)/.test(
+        html.match(new RegExp(`<input[^>]*value="${option}"[^>]*>`))?.[0] ?? "",
+      );
+    try {
+      const saved = await postForm(
+        endpoint,
+        { questionId: q1, optionId: "demo-option-math-10a-demo-1-2" },
+        json,
+      );
+      assert.equal(saved.status, 200);
+      assert.equal((await saved.json()).status, "saved");
+      let html = await (await request(page, { headers: { cookie } })).text();
+      assert.ok(
+        checked(html, "demo-option-math-10a-demo-1-2"),
+        "the saved choice is shown after a reload",
+      );
+
+      const wrong = await postForm(
+        endpoint,
+        { questionId: q1, optionId: "demo-option-math-10a-demo-2-1" },
+        json,
+      );
+      assert.equal(wrong.status, 400);
+
+      // Without JavaScript the same form posts and returns to the question.
+      const plain = await postForm(
+        endpoint,
+        {
+          questionId: q1,
+          optionId: "demo-option-math-10a-demo-1-3",
+          position: "1",
+        },
+        { cookie },
+      );
+      assert.equal(plain.headers.get("location"), `${page}?notice=saved#q-1`);
+      html = await (await request(page, { headers: { cookie } })).text();
+      assert.ok(checked(html, "demo-option-math-10a-demo-1-3"));
+      assert.ok(!checked(html, "demo-option-math-10a-demo-1-2"));
+
+      const cleared = await postForm(
+        endpoint,
+        { questionId: q1, intent: "clear" },
+        json,
+      );
+      assert.equal(cleared.status, 200);
+      html = await (await request(page, { headers: { cookie } })).text();
+      for (const choice of [1, 2, 3, 4]) {
+        assert.ok(!checked(html, `demo-option-math-10a-demo-1-${choice}`), "cleared");
+      }
+    } finally {
+      await signOut(cookie);
+    }
+  },
+);

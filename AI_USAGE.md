@@ -239,6 +239,16 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** `npm run check` passed; `npx vitest run` passed 127 tests (8 new for attempts, including two simultaneous starts on separate connections). The Docker image rebuilt with lint/type checks, the same 127 tests, and the production build; against the applicant's container 11 HTTP smoke tests passed and 3 write tests were skipped by design. On a throwaway Compose project with `SMOKE_WRITES=1`, all 14 passed, including starting twice without the deadline changing; that project and its volume were removed. The countdown and pages were not checked in a browser here.
 
+### Session 20 - Timed attempts, part 2: saving answers
+
+**Direction:** After committing part 1 (`404d4e6`), the applicant asked for part 2.
+
+**Work performed:** An answer service (conditional write on the student's own open attempt before its server-time deadline, question/option ownership checks, save, replace, and clear with rollback on invalid input), an answers endpoint that returns JSON to the page's script and a redirect to plain form posts, and a question component that works as a normal form without JavaScript and saves on selection with it, sending one request at a time per question and showing only acknowledged saves. D26 and D18 record the decisions.
+
+**Corrections from actual checks:** The first version of the simultaneous-save test used two database connections inside the test process and failed after the 5-second busy timeout. The cause is better-sqlite3's synchronous lock wait, which blocks the event loop the lock holder needs. The server does not use that arrangement (one shared client per process, D18), so the test now issues both saves through one shared client, as the server would. The finding is recorded in D18. React's lint rules also rejected setting "enhanced" state in an effect; the component uses `useSyncExternalStore` to tell the server HTML from the running page. A retry path that could drop a newer choice after a failed save was corrected before testing.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 133 tests (6 new for answers). The Docker image rebuilt with lint/type checks, the same 133 tests, and the production build; against the applicant's container 12 HTTP smoke tests passed and 4 write tests were skipped by design. The first write-enabled run on a throwaway Compose project failed one check: the saved choice was not found after a reload. Inspecting the served HTML showed the choice was saved and marked, but React writes `checked=""` before `value`, which the smoke pattern had assumed the other way round. The check now reads the whole input tag. A rerun on a fresh throwaway database (the fixed script run from the host with Node.js 24 against the stack) passed all 16, and the stack and volume were removed. The saving behavior was not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:

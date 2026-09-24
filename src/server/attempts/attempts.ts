@@ -160,6 +160,8 @@ export type AttemptView = {
   remainingMs: number;
   timeOver: boolean;
   quiz: { id: string; title: string; penaltyBps: number };
+  // Saved selections by question id; only server-acknowledged answers.
+  answers: Record<string, string>;
   questions: {
     id: string;
     position: number;
@@ -184,6 +186,7 @@ export async function getAttemptView(
       status: true,
       startedAt: true,
       deadlineAt: true,
+      answers: { select: { questionId: true, optionId: true } },
       quiz: {
         select: {
           id: true,
@@ -217,6 +220,9 @@ export async function getAttemptView(
     remainingMs,
     timeOver: remainingMs === 0,
     quiz,
+    answers: Object.fromEntries(
+      attempt.answers.map((answer) => [answer.questionId, answer.optionId]),
+    ),
     questions,
   };
 }
