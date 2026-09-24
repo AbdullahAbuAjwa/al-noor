@@ -4,10 +4,11 @@ This is a factual work log, not a claim that every planned feature or verificati
 
 ## Tools actually used in this repository's work
 
-- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, application bootstrap, database foundations, demo data, and operator imports.
+- **ChatGPT Codex (desktop):** implementation assistance under the applicant's direction, including requirements analysis, architecture discussion, test planning, documentation, application bootstrap, database foundations, demo data, operator imports, and the bilingual UI foundation.
+- **Claude Code, directed by the applicant:** assists the applicant's own read-only PR review. The applicant reported a clean bootstrap review and later supplied one concrete XLSX percentage finding; the full review transcripts were not provided to Codex.
 - **Read-only supporting tools:** PDF text extraction and page rendering, inspection of the supplied email screenshots, official web documentation, and local directory/Git inspection.
 
-The applicant chose Claude Code for feature reviews and reported that the bootstrap review completed with no changes requested. Codex has not inspected that review transcript. No exact model identifier or percentage of AI-written code is asserted.
+The applicant owns scope, technical decisions, validation, Git history, and merge decisions. The intended sequence is a feature branch and coherent commits, Codex-assisted implementation, tests appropriate to that feature, a PR and applicant review assisted by Claude Code, CI checks, then a human merge decision. This is also the team-project workflow the applicant says he normally follows; this solo assessment has no independent teammate approval. Entries below distinguish completed steps from planned ones. No exact model identifier or percentage of AI-written code is asserted.
 
 ## Applicant direction
 
@@ -31,7 +32,7 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Task given to AI:** Read and explain the assessment, identify gaps, propose an achievable architecture, and discuss scope before writing the application. This is a paraphrase of the conversation, not a verbatim prompt transcript.
 
-**Work performed:** The assistant extracted text from all three PDF pages and visually reviewed their renders, reviewed the supplied email screenshots, and consulted official framework/tool documentation. It proposed role boundaries, timing rules, scoring, import behavior, sample data, tests, and milestones. The applicant reviewed the proposal and supplied the choices listed above.
+**Work performed:** This was a substantial discussion phase before application code. The assistant extracted text from all three PDF pages and visually reviewed their renders, reviewed the supplied email screenshots, and consulted official framework/tool documentation. It proposed role boundaries, timing rules, scoring, import behavior, sample data, tests, and milestones. The applicant challenged and refined those proposals, chose the scope and technology, and requested a phased plan with explicit decisions and edge cases. That plan guided the later implementation rather than being written after the code. No exact planning duration was recorded.
 
 **Corrections and limitations:**
 
@@ -121,6 +122,44 @@ These are observed planning contributions. They do not imply the applicant has r
 **Input and decision:** The applicant relayed a concrete Claude review finding: Excel stores a cell displayed as `25%` as numeric `0.25`, which the importer would treat as a 0.25% negative-marking penalty. The assistant did not receive the full Claude review transcript. To prevent a silent grading-rule change, the XLSX importer now requires text in `penalty_percent` and rejects numeric cells with a row/column error. This is stricter than rejecting only fractions because percentage-formatted cells can contain other numeric values too. CSV behavior and the existing text-cell XLSX template stay the same. README and D21 explain the trade-off.
 
 **Verification actually performed:** A new regression test builds a workbook with every quiz row's penalty cell displayed as `25%` and stored as numeric `0.25`, with the referenced teacher present; it asserts rejection and no new quiz. It also checks that a plain numeric `25` is rejected. Existing XLSX-template tests still import text `25` as `penaltyBps = 2500`. After strengthening that test, local lint/type checks and all 30 tests passed. The parser change passed a Docker build with lint/type checks, 30 tests, and a production build; the container became healthy and both HTTP smoke tests passed. The Docker build's regression-test snapshot preceded the final strengthening of that test, while the full local suite used the final test. No staging, commit, push, or branch change was performed by the assistant.
+
+### Session 08 - Bilingual foundation, first commit-sized part
+
+**Task and applicant direction:** The applicant reported the data/import PR merged into `main` and created `feat/bilingual-ui-foundation`. He asked to start the next feature and to document the review guards he follows on AI-assisted work: a feature branch, PR, diff review, CI checks, and a read-only Claude review. Protecting `main` is intended if time permits, not yet claimed as enabled. The applicant retains all staging, commits, pushes, PR, and merge actions.
+
+**Work performed:** Added server-rendered Arabic-default locale selection, a native POST language form, a persistent `al_noor_locale` cookie, and matching document direction and metadata. Invalid locale values fall back to Arabic. Updated the HTTP smoke suite to exercise the actual route, cookie, English page, and invalid-value rejection. Updated PLAN/README and decisions D10/D22. The responsive visual shell remains the second part of this feature branch.
+
+**Review interpretation:** Official Next.js cookie/response documentation was checked for the server API. Official GitHub documentation confirms that a PR author cannot approve their own PR. The applicant's PR diff inspection is therefore documented as self-review, and Claude feedback as AI-assisted review; neither is represented as independent human approval. CI exists, but `main` protection and a passing hosted run were not verified in this turn.
+
+**Verification actually performed:** Local lint/type checks and the production build passed. The Docker build repeated lint/type checks, all 30 existing tests, and the production build; Compose reached healthy status. Three HTTP smoke checks passed on the running container, including Arabic default, English cookie persistence with `lang=en`/`dir=ltr` and English title, and fallback for an invalid cookie. The applicant requested ownership of visual/browser inspection, so no phone layout or visual quality is claimed yet. No staging, commit, push, or branch change was performed by the assistant.
+
+### Session 09 - Applicant clarification of review and testing practice
+
+**Applicant clarification:** The intended process is the applicant's **own review assisted by Claude Code**, not a separate approver. He also stated that he uses different kinds of tests across his projects as an engineering safety check, especially for AI-assisted code. The assistant updated D11/D22, PLAN, and README to say this plainly and to keep security claims proportionate: tests can catch regressions and misuse cases, but do not prove the whole system secure. This project currently has real-database integration tests and production HTTP smoke checks; unit tests for scoring/time rules and complete-journey E2E tests remain planned for their features. This turn changed documentation only; no new test run or Claude review is claimed.
+
+### Session 10 - Applicant clarification of AI tool roles
+
+**Applicant clarification:** He wants evaluators to see the actual collaboration pattern: **ChatGPT Codex helps implement**, while **Claude Code helps him review** each feature PR. The applicant sets direction and evaluates both tools' output. He described separate feature PRs, review, tests with each feature, and a GitHub build/check as his normal team-project practice, especially for AI-assisted work. The assistant made those roles prominent in README, D22, PLAN, and this record. This is a documentation clarification, not a claim that the current bilingual PR has already received Claude review or passed hosted CI. No code or tests changed in this turn.
+
+### Session 11 - Applicant clarification of planning's role
+
+**Applicant clarification:** He emphasized that planning with ChatGPT Codex took substantial time before implementation and is foundational to this project and his usual approach to software work. The assistant made the planning phase prominent in README, PLAN, and DECISIONS and expanded Session 01 to show the topics and the applicant's decisions. No exact hours were measured, and the documentation does not claim the initial plan predicted every implementation detail. This turn changed documentation only; no code, tests, commits, or external settings changed.
+
+### Session 12 - Responsive visual shell, second bilingual commit-sized part
+
+**Applicant direction:** Implement the next step on `feat/bilingual-ui-foundation`. Keep the implementation solid but let the applicant run the Docker and browser checks himself to conserve interaction time. The applicant still owns staging, commits, pushes, and visual inspection.
+
+**Work performed:** ChatGPT Codex extracted the existing language form into a reusable component and added a shared header/footer and responsive welcome layout using the existing book mark. It added Arabic and English copy, logical CSS properties for both directions, a keyboard skip link and visible focus, and restrained decorative motion disabled by reduced-motion settings. No buttons were added for unfinished quiz or login flows. README, PLAN, and D10 were updated while implementing.
+
+**Verification actually performed:** The first local lint run found a Next.js rule against a plain home-page anchor; the assistant changed it to Next's Link. The first type check used the host's Node.js 18 and failed because Prisma requires Node.js 24; rerunning the full lint/type check with the project's Node.js 24 passed. A subsequent Git status inspection exposed that an attempted CSS patch had not changed the file despite the editing tool returning without an error. The assistant rewrote the stylesheet, confirmed it appeared in the diff and compiled CSS asset, and reran the production build successfully with Node.js 24. Docker startup, HTTP smoke checks, phone/desktop appearance, keyboard behavior, contrast, and reduced-motion behavior remain for the applicant to check. No Claude review of this slice or hosted CI result is claimed. The assistant did not stage, commit, push, or merge.
+
+### Session 13 - Applicant's Claude Code review: redirect and accessible name
+
+**Review input:** The applicant supplied two concrete Claude Code findings. Claude reproduced a language-switch failure in a running Docker container: the redirect used Next's internal `0.0.0.0:3000` URL, while the browser cookie belonged to `localhost`. It also inspected the generated HTML and found a mixed-language accessible label and a visible name absent from the button's accessible name. Codex received the findings, not the full review transcript; the Docker reproduction is attributed to the applicant's Claude-assisted review, not to a Codex-run check.
+
+**Decision and correction:** Codex changed the response to a relative HTTP 303 `Location: /`, preserving the browser's host and published port. The HTTP smoke assertion now checks the complete `Location` header and requests that destination with the issued cookie, instead of checking only the path. The switch button now inherits the page language; a visually hidden prefix in that language and a visible language name with its own `lang`/`dir` compose an accessible name containing the visible text. The applicant evaluates and accepts the review findings; Codex implements the correction.
+
+**Verification actually performed:** Local lint/type checks and production build passed with Node.js 24 after the fix. A direct route-handler check used a request URL at `http://0.0.0.0:3000` and observed `Location: /` plus the locale cookie. Server-rendered button markup was checked for both languages: the visible name has the target language, and the button has no overriding `aria-label`. The rebuilt Docker HTTP smoke run and browser/assistive-technology inspection are pending applicant verification. No hosted CI pass, Claude re-review, staging, commit, push, or merge is claimed for this correction.
 
 ## Implementation workflow
 

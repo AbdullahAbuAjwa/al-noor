@@ -1,8 +1,8 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **The database and demo-data commits are on `feat/data-imports`; CSV/XLSX imports are locally verified and ready for the applicant's commit. Login and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **The data/import milestone is merged into `main`; both bilingual UI slices are committed on `feat/bilingual-ui-foundation`. A Claude-assisted applicant review found two defects; the follow-up fix passes local checks, while its Docker/browser check remains pending. Login and quiz workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
-The assessment brief supplies product requirements; the applicant supplies additional preferences. This record distinguishes those from engineering assumptions. Accepted plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
+The assessment brief supplies product requirements; the applicant supplies additional preferences. Before coding, the applicant devoted substantial time to planning with ChatGPT Codex: reading the full brief, resolving ambiguity, comparing architecture and scope options, identifying misuse cases, and deciding how to test and deliver each part. He considers that planning the foundation of this project and his general engineering practice, especially with AI-assisted implementation. This record distinguishes requirements from assumptions and captures the resulting choices. Plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
 ## D01 - Stack and deployment shape
 
@@ -122,13 +122,19 @@ Use a restrained teal/warm-white visual palette, consistent educational icons, r
 
 **Verify:** Arabic/English content, long labels, phone layouts, language switching without resetting attempts, keyboard focus, contrast, and reduced motion.
 
+**Implementation update:** Read a small `al_noor_locale` cookie on the server, defaulting to Arabic for missing or invalid values. A native POST form changes the preference and redirects to the home page; the root document and metadata use the selected language and direction. The cookie is a non-sensitive display preference, not an authentication credential. This avoids a client-only language flash and works without JavaScript. The second slice adds a shared header/footer, language switch, educational mark, and a responsive welcome layout. CSS logical properties support both directions; visible keyboard focus and a skip link aid navigation. A subtle decorative animation respects reduced-motion preferences. The page offers no controls for unfinished flows. Once nested app pages exist, preserve the current path when switching languages.
+
+**Verification update:** The first language slice passed local and Docker checks, including three HTTP smoke checks. For the visual-shell slice, local lint/type checks and production build passed with Node.js 24. Its fresh Docker run, smoke checks, browser/phone review, keyboard focus, contrast, and reduced-motion inspection are still pending applicant verification. [Next.js cookie API](https://nextjs.org/docs/app/api-reference/functions/cookies); [response cookies](https://nextjs.org/docs/app/api-reference/functions/next-response).
+
+**Review correction:** The applicant's Claude Code review reproduced a language failure in Docker: Next supplied the server bind address in `request.url`, so an absolute redirect sent the browser to `0.0.0.0:3000` and lost the host-scoped cookie. Use an HTTP 303 with `Location: /` so the browser retains its current host and external port. Strengthen the smoke check to require this relative location and request the destination with the issued cookie; checking only the URL path had missed the defect. The same review found that the switch button's Arabic accessible label was placed on an element marked `lang=en`, and its accessible name omitted the visible word `English`. Keep the button in the page language, put `lang`/`dir` on the visible language name, and compose its accessible name from a hidden page-language prefix plus the visible name. Local lint/type checks, production build, a direct handler check using an internal `0.0.0.0` URL, and server-rendered button-markup checks passed. The rebuilt Docker smoke run and applicant browser/screen-reader inspection remain pending.
+
 ## D11 - Risk-based tests and incremental commits
 
-**Basis:** Automated tests, progressive commit history, and transparent AI use are explicit deliverables. The applicant agreed to tests alongside features.
+**Basis:** Automated tests, progressive commit history, and transparent AI use are explicit deliverables. The applicant says risk-based testing is part of his normal engineering practice, especially when AI helped produce code: plausible output still needs independent behavioral checks.
 
-**Decision:** Define critical behavior before implementation. Prefer tests first for clear scoring/time rules; add real-database integration tests for authorization and state transitions. Add E2E tests as complete journeys become available. Include relevant tests and documentation in feature commits, followed by an independent final startup/journey check.
+**Decision:** Define critical behavior before implementation. Use unit tests for bounded scoring/time rules, real-database integration tests for authorization and state transitions, HTTP/startup smoke tests for the delivered build, and E2E tests when complete journeys become available. Include negative and misuse cases for security-sensitive paths. Include relevant tests and documentation in feature commits, followed by a separate final startup/journey check.
 
-**Why and alternatives:** Deferring tests could concentrate redesign and debugging near the deadline. Testing alongside features gives earlier feedback and regression protection while reviewing AI-generated changes. It costs time within each milestone; we prioritize high-impact behavior rather than imposing every test type or a blanket coverage percentage on every component.
+**Why and alternatives:** Deferring tests could concentrate redesign and debugging near the deadline. Testing alongside features helps detect incorrect AI-generated behavior and regressions before a PR is merged. Different test levels cover different risks; none alone proves the application secure, so source review and explicit authorization checks remain necessary. This costs time within each milestone; we prioritize high-impact behavior rather than imposing every test type or a blanket coverage percentage on every component.
 
 **Verify:** Test expectations derived independently from requirements, actual passing commands, and meaningful commit history. Manual review and visual checks remain necessary; do not claim tests prove correctness beyond their coverage.
 
@@ -248,6 +254,16 @@ Require one XLSX sheet named `Import`. Inspect workbook archive parts before par
 
 **Verification:** Real-SQLite tests exercise equivalent CSV/XLSX templates, roles and teacher/class relationships, hashed passwords, stored draft questions, duplicate and unknown references, all-or-nothing rollback, quoted multiline CSV, malformed files, formula/wrong-sheet/oversized XLSX rejection, and the documented CLI. Actual local/container results are recorded in AI_USAGE.md.
 
+## D22 - Review gates for a solo AI-assisted project
+
+**Context:** This is the applicant's usual discipline on team projects, especially AI-assisted ones: a separate branch and PR per feature, review before merge, tests with the feature, and an automated GitHub build/check. AI-generated changes can look plausible while violating edge cases. The brief values progressive commits and clear AI use, but does not require a specific GitHub protection policy.
+
+**Decision:** The applicant sets scope and technical direction, uses **ChatGPT Codex for implementation assistance**, and keeps each feature on its own short-lived branch with coherent commits. He then opens a PR and conducts **his own review with Claude Code as a read-only review assistant**, checks the full diff and build/test results, resolves valid findings, and decides whether to merge. Add risk-appropriate unit, integration, smoke, and later E2E tests with each feature rather than using AI review as a test substitute. The existing GitHub Actions workflow is configured to build and check PRs and pushes to `main`. Record actual review findings and corrections in AI_USAGE.md. In a team, a teammate's review can add independent judgment; in this solo assessment, Claude Code does not provide independent human approval.
+
+**Planned repository guard:** If time permits, configure `main` to require a PR and passing CI checks and to prevent direct or force pushes. This GitHub setting is **not yet enabled or verified** here. Do not require one human approving review in a solo repository: GitHub does not let a PR author approve their own PR, so that setting would block legitimate merges without a second reviewer. Describe this as the applicant's self-review assisted by Claude Code, not as a GitHub approval or independent human review.
+
+**Trade-off / evidence:** A branch and PR for each feature add review overhead, but make the tested diff and AI feedback inspectable before merging. Read-only Git history shows the bootstrap and data milestones merged through PR commits; it does not prove branch protection, passing hosted checks, or an independent human review. Those must be checked separately before claiming them. [GitHub review behavior](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/reviewing-proposed-changes-in-a-pull-request); [branch rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets).
+
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
@@ -265,7 +281,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, integration tests, demo data, and operator imports are implemented. Demo login, browser uploads, quiz authoring, active attempts, grading services, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
+Bootstrap and the data/import milestone are merged. The database schema, migrations, integration tests, demo data, operator imports, language selection, and welcome-page visual shell are implemented. Demo login, browser uploads, quiz authoring, active attempts, grading services, and reports remain unfinished. `main` protection, hosted CI results, and applicant visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 
