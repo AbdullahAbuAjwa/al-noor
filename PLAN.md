@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: bootstrap was merged into `main` in `a2550d8`; the applicant reported its Claude review complete. The database foundation (`566f53e`) and repeat-safe demo data (`0695dbe`) are committed on `feat/data-imports`. CSV/XLSX operator imports are implemented and verified locally as the third part, ready for the applicant's review and commit.
+Current progress: bootstrap and the database/demo/import milestone are merged into `main` (latest merge `a65241b`). Work is on `feat/bilingual-ui-foundation`; server-rendered language selection is verified locally as the first commit-sized part and is ready for the applicant's review. The responsive visual shell is next. Login and quiz journeys remain pending.
 
 ## Objective and source
 
@@ -13,6 +13,8 @@ Build a small, reliable timed-quiz application for **Al Noor Educational Center 
 The primary requirements source is the three-page `byThursday_Brief.pdf` supplied by the assessment team. It calls for a runnable public source repository, one-command startup, loadable realistic sample data, automated tests, progressive commits, and honest decision and AI-use documentation. The supplied PDF is retained locally and is not an application dependency.
 
 The client's scenario is fictional. Product behavior beyond the brief is recorded as an assumption or scope choice in [DECISIONS.md](DECISIONS.md).
+
+This plan was developed with substantial applicant–Codex discussion before application code was written. It covered requirements, ambiguity, architecture, priority under the time limit, failure cases, tests, and commit boundaries. The applicant treats this deliberate planning as the foundation for implementing and reviewing AI-assisted work; the plan remains editable when real evidence changes a decision.
 
 ## Delivery priorities
 
@@ -80,17 +82,22 @@ Genuine fixes and scope changes get their own commits when appropriate. A milest
 
 ### Branch and review workflow
 
-Milestone 3 uses the proposed branch `feat/data-imports` and separate applicant-created commits:
+Milestone 3 was merged from `feat/data-imports` with separate applicant-created commits:
 
 1. `feat: add SQLite schema, migrations and database constraints` — schema, persistent storage, automatic migrations, readiness check, and real-database tests.
 2. `feat: add repeat-safe demo data and sample accounts` — deterministic sample identities and content, password hashes, relative first-use availability, and seed repeat-safety tests.
 3. `feat: add validated CSV and XLSX imports` — documented templates, format readers, shared validation, transactional CLI import, and invalid-input/rollback tests.
 
-Hand off each verified part for a commit before starting the next, as the applicant owns staging and commits. Keep the PR open until all three parts are implemented and reviewed; the first part alone does not complete milestone 3.
+Milestone 4 uses `feat/bilingual-ui-foundation` and two reviewable parts:
+
+1. `feat: add Arabic-first language selection` — server-rendered language/direction, persistent preference, and HTTP behavior checks.
+2. `feat: add responsive educational app shell` — shared visual components and phone/keyboard/reduced-motion review.
+
+Hand off each verified part for the applicant's commit; documentation and appropriate tests accompany the part they explain. The feature PR covers both parts.
 
 Use one short-lived branch at a time, starting from the updated `main` after the previous feature is merged. Keep coherent intermediate commits; a feature branch need not contain only one commit. The first implementation branch is `chore/bootstrap` for milestone 2 only.
 
-The applicant chose Claude Code for an additional review of each completed feature. That review should be read-only and identify concrete failure scenarios, file locations, and relevant missing tests. Discuss findings, fix confirmed problems, and record actual review evidence. Codex implementation and Claude review are both AI-assisted work; neither is an independent human approval. The applicant controls commits, pushes, and merges. Keep meaningful commits when merging, as progressive history is a delivery requirement.
+For this assessment, the applicant directs **ChatGPT Codex** during implementation, then uses **Claude Code to assist his own PR review**. Ask Claude to inspect the full diff read-only and identify concrete failure scenarios, file locations, and missing tests. The applicant assesses findings, fixes confirmed problems, and records actual evidence. This follows his normal team-project habit of one branch and reviewed PR per feature, tests alongside each feature, and a GitHub build/check. In this solo repo, Claude-assisted self-review is not a second human approval. Pair it with risk-based unit, integration, smoke, and later E2E tests; the applicant controls commits, pushes, and merges. Keep meaningful commits when merging, as progressive history is a delivery requirement. Protecting `main` with required PRs and checks is a planned repository-setting step; do not describe it as enabled until verified.
 
 ## Verification strategy
 

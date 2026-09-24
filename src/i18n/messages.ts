@@ -1,4 +1,3 @@
-// Language selection and persistent preferences belong to the UI milestone.
 export const messages = {
   ar: {
     name: "مركز النور التعليمي",
@@ -6,6 +5,7 @@ export const messages = {
     status: "نجهّز لكم مساحة التعلّم",
     introduction:
       "نعمل على تجهيز المنصة. ستتوفر الاختبارات ومتابعة النتائج قريبًا.",
+    switchLanguage: "التبديل إلى الإنجليزية",
   },
   en: {
     name: "Al Noor Educational Center",
@@ -13,5 +13,6 @@ export const messages = {
     status: "Your learning space is on its way",
     introduction:
       "We are preparing the platform. Quizzes and results will be available soon.",
+    switchLanguage: "Switch to Arabic",
   },
 } as const;
