@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestone 1 documentation is prepared and its local links/structure checked. It is awaiting the applicant's review and commit. Application implementation has not started.
+Current progress: milestone 1 was committed by the applicant (`d8db05f`). Milestone 2 is implemented on `chore/bootstrap`: local lint/type checks, the production Docker build/startup, and two HTTP smoke checks passed. Applicant visual inspection and Claude review are pending before the applicant's commit/merge. No business features have been implemented.
 
 ## Objective and source
 
@@ -77,6 +77,12 @@ Every feature milestone includes relevant tests and updates to DECISIONS.md and 
 | 12  | `docs: finalize reviewer guide and known limitations` | Instructions match the delivered checkout; actual commands, credentials, limitations, and AI use are accurate |
 
 Genuine fixes and scope changes get their own commits when appropriate. A milestone may be split into smaller coherent commits. Do not defer all testing to milestone 11 or all documentation to milestone 12. All commit subjects are handoff suggestions for the user, not authorization for the assistant to stage, commit, or push.
+
+### Branch and review workflow
+
+Use one short-lived branch at a time, starting from the updated `main` after the previous feature is merged. Keep coherent intermediate commits; a feature branch need not contain only one commit. The first implementation branch is `chore/bootstrap` for milestone 2 only.
+
+The applicant chose Claude Code for an additional review of each completed feature. That review should be read-only and identify concrete failure scenarios, file locations, and relevant missing tests. Discuss findings, fix confirmed problems, and record actual review evidence. Codex implementation and Claude review are both AI-assisted work; neither is an independent human approval. The applicant controls commits, pushes, and merges. Keep meaningful commits when merging, as progressive history is a delivery requirement.
 
 ## Verification strategy
 

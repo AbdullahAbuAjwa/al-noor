@@ -1,8 +1,8 @@
 # مركز النور التعليمي | Al Noor Educational Center
 
-A planned web application for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
+A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
-**Current status: planning and documentation only. The application is not runnable yet.**
+**Current status: application bootstrap.** The current application displays an Arabic welcome page and exposes a health endpoint. Accounts, quizzes, and persistence belong to the following milestones; they are not available yet.
 
 ## Planned experience
 
@@ -14,21 +14,36 @@ A planned web application for a tutoring center to publish timed quizzes, let st
 
 ## Running the project
 
-The target startup command is shown below. **It will become usable in the bootstrap milestone; it does not work at this stage.**
+From the repository root, with Docker Desktop (or Docker Engine with Compose v2) running:
 
 ```sh
 docker compose up --build
 ```
 
-The intended prerequisites are a downloaded checkout, Docker with Compose running, and internet access for the first build. The application should not require a host installation of Node.js, a hosted database account, or private service credentials.
+Open [http://localhost:3000](http://localhost:3000) once the server is ready. The first build downloads the base image and npm packages, so it requires internet access and can take several minutes. No host Node.js installation, environment file, cloud account, or private credentials are required. The container runs the production build as a non-root user.
 
-Startup will apply migrations, initialize demo data on first use, and serve the application at `http://localhost:3000`. Database files will persist in a named volume. Ordinary restarts must not reset attempts or replace existing data.
+Stop with `Ctrl+C`, or run `docker compose down` from another terminal. If port 3000 is occupied, use `APP_PORT=3001 docker compose up --build` and open `http://localhost:3001` instead (POSIX shell syntax). Compose binds the port to the local machine only.
 
-Verified installation instructions, actual demo credentials, import commands, and explicit reset instructions will be added alongside their implementation. No accounts or passwords have been created yet.
+`GET /api/health` returns `{"status":"ok"}` with caching disabled. This currently checks server liveness, not database connectivity or quiz correctness.
 
-## Planned stack
+The next data milestone will add migrations, first-use sample initialization, and SQLite files in a named volume. No data is persisted by the bootstrap, and no demo accounts, passwords, import commands, or reset command exist yet.
 
-Next.js, TypeScript, SQLite, Prisma, Zod, Tailwind CSS, Vitest, Playwright, and Docker Compose. Compatible versions will be selected and locked during bootstrap.
+## Local development (optional)
+
+Use Node.js 24 (`.nvmrc` records the tested patch version) and its bundled npm. Older Node.js versions are rejected during installation. With a compatible Node.js already active:
+
+```sh
+npm ci
+npm run dev
+```
+
+The development server also uses `http://localhost:3000`; stop the Compose application first or choose a different development port with `npm run dev -- --port 3001`.
+
+## Stack
+
+Installed: Next.js 16.3.6, React 19.3.0, TypeScript 5.9.3, and ESLint 9.39.5, using Node.js 24.19.0 in Docker. Direct versions and `package-lock.json` are repository inputs to `npm ci`; the base image is pinned by its multi-platform digest. ESLint 9 produces an upstream support warning; it is temporarily retained because the current React/accessibility plugins do not support ESLint 10 (see decision D14).
+
+SQLite, Prisma, Zod, Tailwind CSS, Vitest, and Playwright remain planned. Add them with the feature that needs them instead of installing unused dependencies now.
 
 ## Planned reviewer walkthrough
 
@@ -43,7 +58,25 @@ The seed will include approximately 60 students across `10A`, `10B`, and `11A`, 
 
 ## Verification
 
-No application tests have run because implementation has not started. Test commands and reproducible evidence will be documented as they become available. See the [test strategy](PLAN.md#verification-strategy).
+With the optional local development dependencies installed:
+
+```sh
+npm run check
+npm run build
+```
+
+The Docker build runs both lint/type checks and the production build, so these checks also work without host Node.js. To verify the running container:
+
+```sh
+docker compose up --build --detach --wait --wait-timeout 120
+npm run test:smoke
+```
+
+The smoke command requires Node.js 24 but no installed npm packages. It checks health, the Arabic HTML, and the actual delivery of public and compiled static assets. Set `APP_URL=http://127.0.0.1:3001` before the smoke command when using another port.
+
+The GitHub Actions workflow repeats the container build and HTTP smoke checks on pull requests and pushes to `main`. A workflow file is not evidence of a passing hosted run; GitHub execution can only be checked after the applicant pushes it.
+
+Bootstrap verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz unit/integration tests and full user-journey E2E tests will arrive with their features; see the [test strategy](PLAN.md#verification-strategy).
 
 ## Project references
 
@@ -51,7 +84,8 @@ No application tests have run because implementation has not started. Test comma
 - [Decisions, assumptions, trade-offs, and omissions](DECISIONS.md)
 - [Actual AI use and verification record](AI_USAGE.md)
 - [Repository instructions for coding agents](AGENTS.md)
+- [Claude Code review instructions](CLAUDE.md)
 
 ## Current limitations
 
-This initial version contains documentation only. Application code, container setup, imports, sample data, authentication, user interfaces, and automated tests remain to be implemented. The complete planned scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
+This is a bootstrap, not a completed assessment. Database persistence, imports, sample accounts, authentication, quiz behavior, reports, and language switching remain unimplemented. The temporary welcome page has Arabic and English copy prepared, but currently renders Arabic only; the shared bilingual UI is a later milestone. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).

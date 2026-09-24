@@ -22,6 +22,7 @@ Read README.md, PLAN.md, DECISIONS.md, and AI_USAGE.md before substantial change
 - Do not introduce a dependency until it has a clear purpose. Select compatible versions and preserve the lockfile.
 - Keep Arabic and English UI text in the localization structure. Make each screen responsive and handle direction correctly as it is built.
 - Avoid nonfunctional feature controls and claims that unimplemented work is complete.
+- Keep progress updates and handoffs brief and focused on the current step. The applicant opens the application and performs visual/browser checks; do not open or automate its UI unless he asks. Run appropriate programmatic checks and state which visual checks remain his responsibility.
 
 ## Quiz integrity
 

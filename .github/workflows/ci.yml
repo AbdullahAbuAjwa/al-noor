@@ -1,0 +1,32 @@
+name: Application checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build, lint, type-check, and start the production container
+        run: docker compose up --build --detach --wait --wait-timeout 120
+      - name: Verify the running application and bundled assets
+        run: >-
+          docker run --rm --network host
+          --mount type=bind,source="$PWD/scripts",target=/checks,readonly
+          node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+          node --test /checks/smoke.test.mjs
+      - name: Show application logs
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop the application
+        if: always()
+        run: docker compose down
