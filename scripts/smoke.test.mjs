@@ -14,7 +14,10 @@ function request(path, options = {}) {
 function postForm(path, fields, headers = {}) {
   return request(path, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded", ...headers },
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      ...headers,
+    },
     body: new URLSearchParams(fields).toString(),
     redirect: "manual",
   });
@@ -69,15 +72,24 @@ test("the production package serves the Arabic page and its local assets", async
   // Standalone builds omit public/static assets unless the image copies them.
   const assets = new Set([
     "/brand-mark.svg",
-    ...Array.from(html.matchAll(/(?:src|href)="([^" ]*\/_next\/static\/[^" ]+)"/g),
-      (match) => match[1].replaceAll("&amp;", "&")),
+    ...Array.from(
+      html.matchAll(/(?:src|href)="([^" ]*\/_next\/static\/[^" ]+)"/g),
+      (match) => match[1].replaceAll("&amp;", "&"),
+    ),
   ]);
   assert.ok(assets.size > 1, "the page must reference built static assets");
   for (const asset of assets) {
     assert.equal(new URL(asset, baseUrl).origin, new URL(baseUrl).origin);
     const assetResponse = await request(asset);
-    assert.equal(assetResponse.status, 200, `Missing production asset: ${asset}`);
-    assert.ok((await assetResponse.arrayBuffer()).byteLength > 0, `Empty asset: ${asset}`);
+    assert.equal(
+      assetResponse.status,
+      200,
+      `Missing production asset: ${asset}`,
+    );
+    assert.ok(
+      (await assetResponse.arrayBuffer()).byteLength > 0,
+      `Empty asset: ${asset}`,
+    );
   }
 });
 
@@ -90,7 +102,11 @@ test("language selection persists and invalid locale values fall back safely", a
   });
   assert.equal(change.status, 303);
   const location = change.headers.get("location");
-  assert.equal(location, "/", "the redirect must keep the browser's host and port");
+  assert.equal(
+    location,
+    "/",
+    "the redirect must keep the browser's host and port",
+  );
   const setCookie = change.headers.get("set-cookie") ?? "";
   assert.match(setCookie, /al_noor_locale=en/);
   assert.match(setCookie, /httponly/i);
@@ -105,7 +121,10 @@ test("language selection persists and invalid locale values fall back safely", a
   assert.match(englishHtml, /<title>Al Noor Educational Center<\/title>/);
 
   // Switching language returns to the page it was used on, never off-site.
-  const fromLogin = await postForm("/api/locale", { locale: "ar", returnTo: "/login" });
+  const fromLogin = await postForm("/api/locale", {
+    locale: "ar",
+    returnTo: "/login",
+  });
   assert.equal(fromLogin.status, 303);
   assert.equal(fromLogin.headers.get("location"), "/login");
   const offSite = await postForm("/api/locale", {
@@ -134,14 +153,41 @@ test("protected areas require a session and redirect relatively to the login pag
   for (const path of ["/student", "/teacher", "/admin"]) {
     const response = await request(path, { redirect: "manual" });
     assert.equal(response.status, 307, path);
-    assert.equal(response.headers.get("location"), `/login?next=${encodeURIComponent(path)}`);
+    assert.equal(
+      response.headers.get("location"),
+      `/login?next=${encodeURIComponent(path)}`,
+    );
   }
   const login = await request("/login");
   assert.equal(login.status, 200);
   const html = await login.text();
   assert.match(html, /<html[^>]*lang="ar"[^>]*dir="rtl"/);
   assert.match(html, /name="username"/);
-  assert.match(html, /autoComplete="current-password"|autocomplete="current-password"/);
+  assert.match(
+    html,
+    /autoComplete="current-password"|autocomplete="current-password"/,
+  );
+});
+
+test("switching language on the sign-in page keeps its message and requested page", async () => {
+  const path = "/login?error=invalid&next=%2Fstudent";
+  const page = await request(path);
+  const html = await page.text();
+  assert.match(
+    html,
+    /name="returnTo" value="\/login\?error=invalid&amp;next=%2Fstudent"/,
+  );
+
+  const change = await postForm("/api/locale", {
+    locale: "en",
+    returnTo: path,
+  });
+  assert.equal(change.status, 303);
+  assert.equal(change.headers.get("location"), path);
+  const cookie = (change.headers.get("set-cookie") ?? "").split(";")[0];
+  const english = await (await request(path, { headers: { cookie } })).text();
+  assert.match(english, /The username or password is incorrect\./);
+  assert.match(english, /name="next" value="\/student"/);
 });
 
 test("a failed or cross-site sign-in never issues a session", async () => {
@@ -151,7 +197,10 @@ test("a failed or cross-site sign-in never issues a session", async () => {
     password: "not-the-password",
   });
   assert.equal(wrong.status, 303);
-  assert.match(wrong.headers.get("location") ?? "", /^\/login\?error=(invalid|throttled)$/);
+  assert.match(
+    wrong.headers.get("location") ?? "",
+    /^\/login\?error=(invalid|throttled)$/,
+  );
   assert.equal(sessionCookie(wrong), null);
 
   const crossSite = await postForm(
@@ -182,7 +231,10 @@ test("each demo role reaches only its own area, and sign-out ends the session", 
     const home = await request(account.home, { headers: { cookie } });
     assert.equal(home.status, 200);
     const html = await home.text();
-    assert.ok(html.includes(account.visible), `${account.home} shows its own data`);
+    assert.ok(
+      html.includes(account.visible),
+      `${account.home} shows its own data`,
+    );
     for (const text of account.hidden) {
       assert.ok(!html.includes(text), `${account.home} must not show ${text}`);
     }
@@ -190,7 +242,10 @@ test("each demo role reaches only its own area, and sign-out ends the session", 
 
     for (const other of ["/student", "/teacher", "/admin"]) {
       if (other === account.home) continue;
-      const denied = await request(other, { headers: { cookie }, redirect: "manual" });
+      const denied = await request(other, {
+        headers: { cookie },
+        redirect: "manual",
+      });
       assert.equal(denied.status, 307, `${account.username} -> ${other}`);
       assert.equal(denied.headers.get("location"), account.home);
     }
@@ -199,7 +254,10 @@ test("each demo role reaches only its own area, and sign-out ends the session", 
     assert.equal(logout.status, 303);
     assert.equal(logout.headers.get("location"), "/login?signedOut=1");
     assert.match(logout.headers.get("set-cookie") ?? "", /al_noor_session=;/);
-    const reused = await request(account.home, { headers: { cookie }, redirect: "manual" });
+    const reused = await request(account.home, {
+      headers: { cookie },
+      redirect: "manual",
+    });
     assert.equal(reused.status, 307, "a signed-out cookie must not work again");
   }
 });

@@ -187,6 +187,14 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Not verified here:** Browser rendering, phone layout, keyboard use, screen-reader output, and contrast of the new pages (the applicant performs these checks); a hosted CI run; behavior behind a real HTTPS reverse proxy. No independent review of this code has occurred.
 
+### Session 15 - Review follow-up on the merged authentication milestone
+
+**Input:** After milestone 5 was merged, the applicant supplied two review findings and asked Claude Code to check them and fix what was needed on `feat/quiz-authoring`, one commit per fix, before quiz authoring starts. Claude Code confirmed both against the code: (1) the sign-in page passed only `/login` to the language switch, so switching language dropped `?error=` and `?next=`; (2) the login throttle is per username, so rotating usernames reaches the costly password check on every request.
+
+**Fix 1 (language switch on sign-in):** The page now rebuilds its own return path from recognized values (known error code, signed-out flag, safe `next`), and the error message is chosen from the same known list. A unit test covers accepted, unknown, unsafe, and repeated values; a new HTTP smoke test switches language on `/login?error=invalid&next=%2Fstudent` and checks the English error message and the preserved `next` field.
+
+**Verification actually performed for fix 1:** `npm run check` passed; `npx vitest run` passed 49 tests; the Docker image rebuilt with lint/type checks, the same 49 tests, and the production build, and the container became healthy; `docker compose exec -T app node --test scripts/smoke.test.mjs` passed all 7 HTTP smoke tests. The switch was not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:
