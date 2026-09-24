@@ -10,7 +10,7 @@ export const messages = {
       "نعمل على تجهيز المنصة. ستتوفر الاختبارات ومتابعة النتائج قريبًا.",
     nextStep: "تجربة هادئة تساعد الطالب والمعلّم على التركيز على ما يهم.",
     footerLine: "التعلّم يبدأ بخطوة واضحة.",
-    switchLanguage: "التبديل إلى الإنجليزية",
+    switchLanguagePrefix: "التبديل إلى ",
   },
   en: {
     name: "Al Noor Educational Center",
@@ -24,6 +24,6 @@ export const messages = {
     nextStep:
       "A calm experience that helps students and teachers focus on what matters.",
     footerLine: "Learning starts with a clear step.",
-    switchLanguage: "Switch to Arabic",
+    switchLanguagePrefix: "Switch to ",
   },
 } as const;

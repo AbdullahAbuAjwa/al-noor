@@ -16,8 +16,9 @@ export async function POST(request: Request) {
     return new Response("Unsupported language.", { status: 400 });
   }
 
-  const response = NextResponse.redirect(new URL("/", request.url), {
+  const response = new NextResponse(null, {
     status: 303,
+    headers: { Location: "/" },
   });
   response.cookies.set(localeCookieName, locale, {
     httpOnly: true,

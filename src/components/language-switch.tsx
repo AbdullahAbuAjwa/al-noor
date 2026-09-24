@@ -10,9 +10,6 @@ export function LanguageSwitch({ locale }: { locale: Locale }) {
         type="submit"
         name="locale"
         value={nextLocale}
-        lang={nextLocale}
-        dir={nextLocale === "ar" ? "rtl" : "ltr"}
-        aria-label={messages[locale].switchLanguage}
         className="language-switch__button"
       >
         <svg
@@ -26,7 +23,10 @@ export function LanguageSwitch({ locale }: { locale: Locale }) {
           <circle cx="12" cy="12" r="9" />
           <path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9S14.4 18.5 12 21M12 3c-2.4 2.5-3.6 5.5-3.6 9S9.6 18.5 12 21" />
         </svg>
-        {nextLocale === "ar" ? "العربية" : "English"}
+        <span className="visually-hidden">{messages[locale].switchLanguagePrefix}</span>
+        <span lang={nextLocale} dir={nextLocale === "ar" ? "rtl" : "ltr"}>
+          {nextLocale === "ar" ? "العربية" : "English"}
+        </span>
       </button>
     </form>
   );

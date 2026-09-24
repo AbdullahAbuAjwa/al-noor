@@ -49,14 +49,15 @@ test("language selection persists and invalid locale values fall back safely", a
     redirect: "manual",
   });
   assert.equal(change.status, 303);
-  assert.equal(new URL(change.headers.get("location"), baseUrl).pathname, "/");
+  const location = change.headers.get("location");
+  assert.equal(location, "/", "the redirect must keep the browser's host and port");
   const setCookie = change.headers.get("set-cookie") ?? "";
   assert.match(setCookie, /al_noor_locale=en/);
   assert.match(setCookie, /httponly/i);
   assert.match(setCookie, /samesite=lax/i);
   const cookie = setCookie.split(";")[0];
 
-  const english = await request("/", { headers: { cookie } });
+  const english = await request(location, { headers: { cookie } });
   assert.equal(english.status, 200);
   const englishHtml = await english.text();
   assert.match(englishHtml, /<html[^>]*lang="en"[^>]*dir="ltr"/);

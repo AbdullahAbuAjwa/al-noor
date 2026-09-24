@@ -153,6 +153,14 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** The first local lint run found a Next.js rule against a plain home-page anchor; the assistant changed it to Next's Link. The first type check used the host's Node.js 18 and failed because Prisma requires Node.js 24; rerunning the full lint/type check with the project's Node.js 24 passed. A subsequent Git status inspection exposed that an attempted CSS patch had not changed the file despite the editing tool returning without an error. The assistant rewrote the stylesheet, confirmed it appeared in the diff and compiled CSS asset, and reran the production build successfully with Node.js 24. Docker startup, HTTP smoke checks, phone/desktop appearance, keyboard behavior, contrast, and reduced-motion behavior remain for the applicant to check. No Claude review of this slice or hosted CI result is claimed. The assistant did not stage, commit, push, or merge.
 
+### Session 13 - Applicant's Claude Code review: redirect and accessible name
+
+**Review input:** The applicant supplied two concrete Claude Code findings. Claude reproduced a language-switch failure in a running Docker container: the redirect used Next's internal `0.0.0.0:3000` URL, while the browser cookie belonged to `localhost`. It also inspected the generated HTML and found a mixed-language accessible label and a visible name absent from the button's accessible name. Codex received the findings, not the full review transcript; the Docker reproduction is attributed to the applicant's Claude-assisted review, not to a Codex-run check.
+
+**Decision and correction:** Codex changed the response to a relative HTTP 303 `Location: /`, preserving the browser's host and published port. The HTTP smoke assertion now checks the complete `Location` header and requests that destination with the issued cookie, instead of checking only the path. The switch button now inherits the page language; a visually hidden prefix in that language and a visible language name with its own `lang`/`dir` compose an accessible name containing the visible text. The applicant evaluates and accepts the review findings; Codex implements the correction.
+
+**Verification actually performed:** Local lint/type checks and production build passed with Node.js 24 after the fix. A direct route-handler check used a request URL at `http://0.0.0.0:3000` and observed `Location: /` plus the locale cookie. Server-rendered button markup was checked for both languages: the visible name has the target language, and the button has no overriding `aria-label`. The rebuilt Docker HTTP smoke run and browser/assistive-technology inspection are pending applicant verification. No hosted CI pass, Claude re-review, staging, commit, push, or merge is claimed for this correction.
+
 ## Implementation workflow
 
 For each substantial feature, record:
