@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: bootstrap and the database/demo/import milestone are merged into `main` (latest merge `a65241b`). Work is on `feat/bilingual-ui-foundation`; the language selection and responsive shell are separate applicant-created commits. A Claude-assisted review exposed an incorrect redirect origin and a language-switch accessibility issue. The follow-up fix passes local lint/type/build checks; the applicant's fresh Docker, phone, keyboard, and visual checks remain pending. Login and quiz journeys remain pending.
+Current progress: milestones 1–4 are merged into `main` (latest merge `0edef22`, bilingual UI foundation). Milestone 5 (authentication and role-based access) is implemented by Claude Code on `feat/auth-role-access`; local checks, the Docker build, and HTTP smoke checks passed, and the applicant's review, commit, and visual checks remain. Quiz authoring, attempts, grading, and reports remain pending.
 
 ## Objective and source
 
@@ -21,7 +21,7 @@ This plan was developed with substantial applicant–Codex discussion before app
 ### Core delivery
 
 - [x] One-command local startup, migrations, persistent storage, and first-use sample initialization.
-- [ ] Login, logout, server-side sessions, and student/teacher/administrator authorization.
+- [x] Login, logout, server-side sessions, and student/teacher/administrator authorization (home pages; each later feature adds its own checks).
 - [ ] Arabic by default, selectable English, and responsive screens as each feature is built.
 - [ ] Teacher quiz drafts, question editing, assignment to authorized classes, and publication.
 - [ ] One timed attempt per student and quiz, resumable before its deadline.
@@ -95,9 +95,17 @@ Milestone 4 uses `feat/bilingual-ui-foundation` and two reviewable parts:
 
 Hand off each verified part for the applicant's commit; documentation and appropriate tests accompany the part they explain. The feature PR covers both parts.
 
+Milestone 5 uses `feat/auth-role-access`. It is the first milestone implemented by Claude Code (D24); the applicant still stages, commits, pushes, and merges. It is committed in three parts:
+
+1. `feat: add hashed sessions and password sign-in` — sessions, login/logout handlers, throttling, safe paths, cross-site and body-size guards, and their tests.
+2. `feat: add server-side role checks and role-scoped data` — the page role guard, availability rule, role-scoped queries, and their tests.
+3. `feat: add bilingual sign-in and role home pages` — login and role pages, account bar, language return path, smoke checks, and documentation.
+
+This milestone's code was written before it was split (AI_USAGE Session 14). From milestone 6 on, each part is implemented and handed off only after the previous part is committed.
+
 Use one short-lived branch at a time, starting from the updated `main` after the previous feature is merged. Keep coherent intermediate commits; a feature branch need not contain only one commit. The first implementation branch is `chore/bootstrap` for milestone 2 only.
 
-For this assessment, the applicant directs **ChatGPT Codex** during implementation, then uses **Claude Code to assist his own PR review**. Ask Claude to inspect the full diff read-only and identify concrete failure scenarios, file locations, and missing tests. The applicant assesses findings, fixes confirmed problems, and records actual evidence. This follows his normal team-project habit of one branch and reviewed PR per feature, tests alongside each feature, and a GitHub build/check. In this solo repo, Claude-assisted self-review is not a second human approval. Pair it with risk-based unit, integration, smoke, and later E2E tests; the applicant controls commits, pushes, and merges. Keep meaningful commits when merging, as progressive history is a delivery requirement. Protecting `main` with required PRs and checks is a planned repository-setting step; do not describe it as enabled until verified.
+Through milestone 4, the applicant directed **ChatGPT Codex** during implementation, then used **Claude Code to assist his own PR review**. From milestone 5, Claude Code implements at the applicant's direction (D24), and its checks of its own code are not an independent review; the rest of this paragraph describes the earlier review arrangement. Ask Claude to inspect the full diff read-only and identify concrete failure scenarios, file locations, and missing tests. The applicant assesses findings, fixes confirmed problems, and records actual evidence. This follows his normal team-project habit of one branch and reviewed PR per feature, tests alongside each feature, and a GitHub build/check. In this solo repo, Claude-assisted self-review is not a second human approval. Pair it with risk-based unit, integration, smoke, and later E2E tests; the applicant controls commits, pushes, and merges. Keep meaningful commits when merging, as progressive history is a delivery requirement. Protecting `main` with required PRs and checks is a planned repository-setting step; do not describe it as enabled until verified.
 
 ## Verification strategy
 

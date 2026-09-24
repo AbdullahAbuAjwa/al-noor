@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **The data/import milestone is merged into `main`; both bilingual UI slices are committed on `feat/bilingual-ui-foundation`. A Claude-assisted applicant review found two defects; the follow-up fix passes local checks, while its Docker/browser check remains pending. Login and quiz workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **Bootstrap, data/imports, and the bilingual UI foundation are merged into `main`. Authentication and role-based access are implemented on `feat/auth-role-access` and locally verified (D23); from this milestone Claude Code implements at the applicant's direction (D24). Quiz authoring, attempts, grading, and reports remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. Before coding, the applicant devoted substantial time to planning with ChatGPT Codex: reading the full brief, resolving ambiguity, comparing architecture and scope options, identifying misuse cases, and deciding how to test and deliver each part. He considers that planning the foundation of this project and his general engineering practice, especially with AI-assisted implementation. This record distinguishes requirements from assumptions and captures the resulting choices. Plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -126,6 +126,8 @@ Use a restrained teal/warm-white visual palette, consistent educational icons, r
 
 **Verification update:** The first language slice passed local and Docker checks, including three HTTP smoke checks. For the visual-shell slice, local lint/type checks and production build passed with Node.js 24. Its fresh Docker run, smoke checks, browser/phone review, keyboard focus, contrast, and reduced-motion inspection are still pending applicant verification. [Next.js cookie API](https://nextjs.org/docs/app/api-reference/functions/cookies); [response cookies](https://nextjs.org/docs/app/api-reference/functions/next-response).
 
+**Return-path update (milestone 5):** With signed-in pages now present, the language form sends the current page as `returnTo`; the handler accepts only a local absolute path (never `//host` or `/\host`) and otherwise returns to `/`. Dates render in `Asia/Amman` with Latin digits in both languages, matching scores, usernames, and codes.
+
 **Review correction:** The applicant's Claude Code review reproduced a language failure in Docker: Next supplied the server bind address in `request.url`, so an absolute redirect sent the browser to `0.0.0.0:3000` and lost the host-scoped cookie. Use an HTTP 303 with `Location: /` so the browser retains its current host and external port. Strengthen the smoke check to require this relative location and request the destination with the issued cookie; checking only the URL path had missed the defect. The same review found that the switch button's Arabic accessible label was placed on an element marked `lang=en`, and its accessible name omitted the visible word `English`. Keep the button in the page language, put `lang`/`dir` on the visible language name, and compose its accessible name from a hidden page-language prefix plus the visible name. Local lint/type checks, production build, a direct handler check using an internal `0.0.0.0` URL, and server-rendered button-markup checks passed. The rebuilt Docker smoke run and applicant browser/screen-reader inspection remain pending.
 
 ## D11 - Risk-based tests and incremental commits
@@ -189,6 +191,8 @@ Use a multi-stage Docker build and Next's standalone output. Explicitly copy bot
 **Decision and reason:** Keep a short `CLAUDE.md` that points to the shared repository instructions and defines a read-only reviewer role. It asks Claude to include untracked files, assess the current milestone, and report concrete findings with evidence. Persistent instructions reduce repeated prompting and keep review expectations consistent.
 
 **Trade-off / evidence:** The file must stay aligned with AGENTS.md and the agreed workflow. It guides behavior; it is not a technical permission boundary or evidence that a review happened. The applicant assesses findings, and actual review outcomes are recorded in AI_USAGE.md after review.
+
+**Update (milestone 5):** CLAUDE.md now describes Claude Code as the implementer for the remaining milestones, keeping the same Git restrictions and reporting rules; see D24.
 
 ## D17 - Database constraints and numeric representation
 
@@ -264,6 +268,32 @@ Require one XLSX sheet named `Import`. Inspect workbook archive parts before par
 
 **Trade-off / evidence:** A branch and PR for each feature add review overhead, but make the tested diff and AI feedback inspectable before merging. Read-only Git history shows the bootstrap and data milestones merged through PR commits; it does not prove branch protection, passing hosted checks, or an independent human review. Those must be checked separately before claiming them. [GitHub review behavior](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/reviewing-proposed-changes-in-a-pull-request); [branch rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets).
 
+## D23 - Password sessions and server-side role access
+
+**Basis:** The brief requires student login, teacher-entered quizzes, and centre-wide results. D03 fixes closed enrollment and three roles. Session mechanics, throttling, and redirect rules are engineering decisions.
+
+**Decision:** Sign in with the username/password stored by the seed or importer (scrypt, D20/D21). A successful login creates a random 256-bit token sent only in an `HttpOnly`, `SameSite=Lax` cookie (`Secure` over HTTPS). The `Session` table stores a SHA-256 hash of the token, never the token. Sessions last at most 12 hours; logout deletes the row immediately, expired rows are rejected and purged, and the next login removes other expired rows. Wrong passwords and unknown usernames get the same message, and unknown usernames still run a password verification so response time does not reveal which accounts exist.
+
+Every protected page calls a server-side role check. A signed-out request goes to `/login?next=…`; the requested path is honored after login only inside that account's own area, so the parameter cannot become an open redirect or a way into another role's pages. A signed-in user who opens another role's page is sent to their own area. Home pages show only role-scoped data: a student sees published quizzes for their own class (drafts and other classes stay hidden), a teacher sees only their own quizzes and drafts, and the administrator sees centre totals. Queries select explicit fields; password hashes never reach a page.
+
+State-changing requests are plain HTML form posts to route handlers. They work without JavaScript, can be tested directly over HTTP, and answer with a relative 303 `Location` (the D10 lesson about Next's internal bind address). They reject a request whose `Origin` or `Sec-Fetch-Site` shows another site, including another port on the same host; `SameSite=Lax` remains the main CSRF defense. Request bodies are read with a byte limit instead of buffering arbitrary input.
+
+**Login throttling:** After five failed attempts for one username within ten minutes, that username is refused for 60 seconds, even with the correct password. The counter is kept in the server process and resets on success, after its window, or on restart.
+
+**Why / alternatives:** An authentication library (the route Next.js documentation recommends) would still need the same credential, session, and role decisions for a closed username/password roster, plus configuration and dependencies to review; the small explicit implementation is easier to test and explain here. Stateless signed tokens were rejected because logout could not revoke them without a server-side list. Server Actions provide a built-in origin check, but route handlers keep the forms, tests, and redirects explicit and consistent. The `forbidden()` helper was not used because it is still experimental in this Next.js version.
+
+**Trade-off / risk:** Throttling by username means a classmate who knows another student's username could repeatedly delay that student's sign-in by up to a minute at a time. Keying by client address would be unreliable because Docker publishing and proxies hide it, and forwarded headers can be forged without a trusted proxy. A real deployment would add rate limiting at a trusted proxy, monitoring, and account recovery. There is no password change, recovery, or account management UI in the core (D03).
+
+**Verification:** Real-SQLite tests cover login for all three roles, hashed token storage, username normalization, generic failures, oversized input, throttling (lock, other accounts unaffected, expiry, reset on success, window expiry), session expiry at the exact boundary, forged/malformed tokens, logout of one session only, and expired-session purging. Unit tests cover safe local paths, role-bounded post-login paths, availability boundaries, cross-site request detection (including another localhost port and forwarded host), bounded form reading (including a body with no length header), and relative redirects. Role-scoped query tests cover class/owner filtering and centre totals. HTTP smoke tests against the production container cover relative redirects for signed-out users, Arabic login page, failed and cross-site logins, each role's own page and data, refusal of other roles' pages, sign-out, and reuse of a signed-out cookie. Results are in AI_USAGE.md.
+
+## D24 - Claude Code moves from review to implementation
+
+**Context:** Through milestone 4, ChatGPT Codex implemented changes and the applicant used Claude Code for read-only PR review (D16, D22). For milestone 5 onward, the applicant directed Claude Code to implement the remaining core milestones under the same Git ownership rules.
+
+**Decision:** Claude Code implements each feature on its own branch starting from the merged `main`, adds tests with the feature, runs the available checks and the Docker startup, updates README/DECISIONS/AI_USAGE while working, and hands off with a proposed commit. The applicant alone stages, commits, pushes, and opens or merges PRs, and performs the visual/browser checks. CLAUDE.md now describes this implementer role instead of the read-only reviewer role.
+
+**Trade-off / evidence:** The earlier separation between the implementing tool and the reviewing tool no longer holds for these milestones. Claude Code's checks of code it wrote are self-verification, not independent review, and no second AI review is claimed unless one actually occurs. The mitigations are tests whose expected values come from the brief, the seed data, and hand calculation rather than from the implementation; HTTP checks against the production container; and the applicant's own review and interface checks before merging.
+
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
@@ -281,7 +311,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap and the data/import milestone are merged. The database schema, migrations, integration tests, demo data, operator imports, language selection, and welcome-page visual shell are implemented. Demo login, browser uploads, quiz authoring, active attempts, grading services, and reports remain unfinished. `main` protection, hosted CI results, and applicant visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
+Bootstrap, data/imports, and the bilingual UI foundation are merged. The database schema, migrations, integration tests, demo data, operator imports, language selection, visual shell, and (on `feat/auth-role-access`) login, logout, sessions, and role-scoped home pages are implemented. Quiz authoring and publication, taking a timed quiz, autosave, grading, detailed results/reports, and browser uploads remain unfinished. `main` protection, hosted CI results, and applicant visual checks of the sign-in and home pages have not been verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 
