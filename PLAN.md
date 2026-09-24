@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestones 1–6 are merged into `main` (latest `6f72c03`, quiz authoring and publishing). Milestone 7 is on `feat/timed-attempts`: part 1 starts and resumes timed attempts; part 2 saves answers on the server as they are chosen. Offline recovery beyond an in-page retry, submission and grading, and reports remain pending.
+Current progress: all core milestones are merged into `main` (latest `4ac9e8c`, submission, grading, and results). Milestones 8–10 were combined into one branch under time pressure; the offline answer queue from milestone 8 was deferred (DECISIONS D27). `docs/final-verification` records the clean-checkout check and final documentation.
 
 ## Objective and source
 
@@ -22,14 +22,14 @@ This plan was developed with substantial applicant–Codex discussion before app
 
 - [x] One-command local startup, migrations, persistent storage, and first-use sample initialization.
 - [x] Login, logout, server-side sessions, and student/teacher/administrator authorization (home pages; each later feature adds its own checks).
-- [ ] Arabic by default, selectable English, and responsive screens as each feature is built.
+- [x] Arabic by default, selectable English, and responsive screens as each feature is built (visual and phone checks by the applicant).
 - [x] Teacher quiz drafts, question editing, assignment to authorized classes, and publication.
 - [x] One timed attempt per student and quiz, resumable before its deadline.
-- [ ] Answer autosave, visible save status, bounded connection recovery, and repeat-safe submission.
+- [x] Answer autosave, visible save status, and repeat-safe submission (connection recovery is in-page retry only; see DECISIONS D27).
 - [x] Server-side weighted grading with configurable negative marking and a final score floor of zero.
 - [x] Student results, teacher results for owned quizzes, and center-wide administrator reports.
 - [x] CSV and XLSX templates and an authorized, documented import command for teachers, students, and quiz data.
-- [ ] Risk-based automated tests, fresh-start verification, and accurate documentation.
+- [x] Risk-based automated tests, fresh-start verification, and accurate documentation.
 
 ### Enhancements after the core passes
 
@@ -131,13 +131,13 @@ Test pending-answer recovery before and after expiry, stale updates from another
 
 Reserve the final 90-120 minutes of available work for verification and documentation. Stop starting optional features during that period.
 
-- [ ] Build, type checking, linting, and implemented automated suites pass.
-- [ ] The startup command works from tracked files with fresh storage and without personal credentials.
-- [ ] Sample student, teacher, and administrator accounts work and their scopes are verified.
-- [ ] CSV and XLSX examples are loadable; restart behavior preserves results.
+- [x] Build, type checking, linting, and implemented automated suites pass.
+- [x] The startup command works from tracked files with fresh storage and without personal credentials.
+- [x] Sample student, teacher, and administrator accounts work and their scopes are verified.
+- [x] CSV and XLSX examples are loadable; restart behavior preserves results.
 - [ ] Main journeys work in Arabic and English on phone and desktop layouts.
-- [ ] README instructions and credentials are accurate; decision and AI-use records reflect actual work.
-- [ ] Unfinished work and next-week priorities are explicit.
+- [x] README instructions and credentials are accurate; decision and AI-use records reflect actual work.
+- [x] Unfinished work and next-week priorities are explicit.
 - [ ] Source and progressive commits are in the public repository before its link is submitted.
 
 Repository publication and submission are separate delivery actions. Do not imply a repository has been published or an email sent until those actions actually occur.

@@ -787,7 +787,7 @@ fieldset.field legend {
 }
 .back-link { margin-block: 1.25rem 0; }
 .back-link a,
-.card p a {
+.card p a:not(.button) {
   color: var(--primary-dark);
   font-weight: 700;
 }
