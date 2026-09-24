@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: bootstrap and the database/demo/import milestone are merged into `main` (latest merge `a65241b`). Work is on `feat/bilingual-ui-foundation`; server-rendered language selection is verified locally as the first commit-sized part and is ready for the applicant's review. The responsive visual shell is next. Login and quiz journeys remain pending.
+Current progress: bootstrap and the database/demo/import milestone are merged into `main` (latest merge `a65241b`). Work is on `feat/bilingual-ui-foundation`; server-rendered language selection is committed as the first part. The responsive visual shell is implemented and passed local lint/type/build checks; the applicant's Docker, phone, keyboard, and visual checks remain before its commit. Login and quiz journeys remain pending.
 
 ## Objective and source
 

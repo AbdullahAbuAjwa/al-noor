@@ -2,7 +2,7 @@
 
 A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
-**Current status: database, demo data, operator imports, and language selection.** The application has persistent SQLite storage, automatic first-use demo data, CSV/XLSX command-line imports, an Arabic/English welcome page with a persistent language switch, and a database readiness endpoint. Login and interactive quiz workflows are not available yet.
+**Current status: database, demo data, operator imports, and bilingual UI foundation.** The application has persistent SQLite storage, automatic first-use demo data, CSV/XLSX command-line imports, a responsive Arabic/English welcome page with a persistent language switch, and a database readiness endpoint. Login and interactive quiz workflows are not available yet.
 
 **Planning came first.** Before writing application code, Abdullah spent substantial time working through the complete client brief with **ChatGPT Codex**. He challenged assumptions and decided the scope, architecture, role boundaries, timing and grading behavior, import rules, edge cases, delivery order, and verification strategy. [PLAN.md](PLAN.md) and [DECISIONS.md](DECISIONS.md) were the starting point for implementation and continue to evolve as tests and reviews provide evidence. Deliberate planning before coding is part of how he approaches projects generally, especially when using AI tools.
 
@@ -26,7 +26,7 @@ docker compose up --build
 
 Open [http://localhost:3000](http://localhost:3000) once the server is ready. The first build downloads the base image and npm packages, so it requires internet access and can take several minutes. No host Node.js installation, environment file, cloud account, or private credentials are required. The container runs the production build as a non-root user.
 
-The welcome page opens in Arabic. Its language button switches to English or back to Arabic and remembers the choice on this browser. The document direction and page title follow the selected language. This preference is independent of the later login feature.
+The welcome page opens in Arabic. Its language button switches to English or back to Arabic and remembers the choice on this browser. The document direction and page title follow the selected language. The page includes a keyboard skip link and respects reduced-motion settings. This preference is independent of the later login feature.
 
 Stop with `Ctrl+C`, or run `docker compose down` from another terminal. If port 3000 is occupied, use `APP_PORT=3001 docker compose up --build` and open `http://localhost:3001` instead (POSIX shell syntax). Compose binds the port to the local machine only.
 
@@ -123,10 +123,10 @@ The Docker build runs lint/type checks, the database integration suite, and the 
 
 ```sh
 docker compose up --build --detach --wait --wait-timeout 120
-npm run test:smoke
+docker compose exec -T app node --test scripts/smoke.test.mjs
 ```
 
-The smoke command requires Node.js 24 but no installed npm packages. It checks health, the Arabic HTML, and the actual delivery of public and compiled static assets. Set `APP_URL=http://127.0.0.1:3001` before the smoke command when using another port.
+The smoke command runs with the container's Node.js 24, so no host Node.js is needed. It checks health, the Arabic HTML, language switching, and delivery of public and compiled static assets. If you run it on the host instead, use `npm run test:smoke` with Node.js 24 and set `APP_URL=http://127.0.0.1:3001` when using another port.
 
 The GitHub Actions workflow repeats the container build and HTTP smoke checks on pull requests and pushes to `main`. The language smoke check submits the switch form and verifies the resulting cookie, translated page, and document direction. A workflow file is not evidence of a passing hosted run; GitHub execution can only be checked after the applicant pushes it.
 
@@ -144,4 +144,4 @@ Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz uni
 
 ## Current limitations
 
-This is a data and bilingual welcome-page foundation, not a completed assessment. Authentication, browser uploads, interactive quiz behavior, reports, and the shared visual shell remain unimplemented. Foreign keys and checks protect stored relationships; CLI imports enforce teacher/class assignments and create drafts, while web authorization, publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
+This is a data and bilingual visual foundation, not a completed assessment. Authentication, browser uploads, interactive quiz behavior, reports, and role-specific navigation remain unimplemented. Foreign keys and checks protect stored relationships; CLI imports enforce teacher/class assignments and create drafts, while web authorization, publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).

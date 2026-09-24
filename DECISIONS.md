@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **The data/import milestone is merged into `main`; the first bilingual UI slice is locally verified on `feat/bilingual-ui-foundation`. Login and quiz workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **The data/import milestone is merged into `main`; the language slice is committed and the visual-shell slice is locally checked on `feat/bilingual-ui-foundation`. Docker and applicant visual review of the latter remain pending. Login and quiz workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. Before coding, the applicant devoted substantial time to planning with ChatGPT Codex: reading the full brief, resolving ambiguity, comparing architecture and scope options, identifying misuse cases, and deciding how to test and deliver each part. He considers that planning the foundation of this project and his general engineering practice, especially with AI-assisted implementation. This record distinguishes requirements from assumptions and captures the resulting choices. Plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -122,9 +122,9 @@ Use a restrained teal/warm-white visual palette, consistent educational icons, r
 
 **Verify:** Arabic/English content, long labels, phone layouts, language switching without resetting attempts, keyboard focus, contrast, and reduced motion.
 
-**Implementation update:** Read a small `al_noor_locale` cookie on the server, defaulting to Arabic for missing or invalid values. A native POST form changes the preference and redirects to the home page; the root document and metadata use the selected language and direction. The cookie is a non-sensitive display preference, not an authentication credential. This avoids a client-only language flash and works without JavaScript. The first slice still uses the temporary welcome page; the shared visual shell and phone review follow in the second slice. Once nested app pages exist, preserve the current path when switching languages.
+**Implementation update:** Read a small `al_noor_locale` cookie on the server, defaulting to Arabic for missing or invalid values. A native POST form changes the preference and redirects to the home page; the root document and metadata use the selected language and direction. The cookie is a non-sensitive display preference, not an authentication credential. This avoids a client-only language flash and works without JavaScript. The second slice adds a shared header/footer, language switch, educational mark, and a responsive welcome layout. CSS logical properties support both directions; visible keyboard focus and a skip link aid navigation. A subtle decorative animation respects reduced-motion preferences. The page offers no controls for unfinished flows. Once nested app pages exist, preserve the current path when switching languages.
 
-**Verification update:** Local lint/type checks and build passed. The Docker build passed the existing 30 tests and production checks, reached healthy status, and three HTTP smoke checks passed, including English selection, cookie persistence, direction/title, and invalid-value fallback. The applicant's browser and phone review is still pending. [Next.js cookie API](https://nextjs.org/docs/app/api-reference/functions/cookies); [response cookies](https://nextjs.org/docs/app/api-reference/functions/next-response).
+**Verification update:** The first language slice passed local and Docker checks, including three HTTP smoke checks. For the visual-shell slice, local lint/type checks and production build passed with Node.js 24. Its fresh Docker run, smoke checks, browser/phone review, keyboard focus, contrast, and reduced-motion inspection are still pending applicant verification. [Next.js cookie API](https://nextjs.org/docs/app/api-reference/functions/cookies); [response cookies](https://nextjs.org/docs/app/api-reference/functions/next-response).
 
 ## D11 - Risk-based tests and incremental commits
 
@@ -279,7 +279,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap and the data/import milestone are merged. The database schema, migrations, integration tests, demo data, operator imports, and welcome-page language selection are implemented. The shared visual shell, demo login, browser uploads, quiz authoring, active attempts, grading services, and reports remain unfinished. `main` protection, hosted CI results, and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
+Bootstrap and the data/import milestone are merged. The database schema, migrations, integration tests, demo data, operator imports, language selection, and welcome-page visual shell are implemented. Demo login, browser uploads, quiz authoring, active attempts, grading services, and reports remain unfinished. `main` protection, hosted CI results, and applicant visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 

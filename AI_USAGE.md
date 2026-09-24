@@ -145,6 +145,14 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Applicant clarification:** He emphasized that planning with ChatGPT Codex took substantial time before implementation and is foundational to this project and his usual approach to software work. The assistant made the planning phase prominent in README, PLAN, and DECISIONS and expanded Session 01 to show the topics and the applicant's decisions. No exact hours were measured, and the documentation does not claim the initial plan predicted every implementation detail. This turn changed documentation only; no code, tests, commits, or external settings changed.
 
+### Session 12 - Responsive visual shell, second bilingual commit-sized part
+
+**Applicant direction:** Implement the next step on `feat/bilingual-ui-foundation`. Keep the implementation solid but let the applicant run the Docker and browser checks himself to conserve interaction time. The applicant still owns staging, commits, pushes, and visual inspection.
+
+**Work performed:** ChatGPT Codex extracted the existing language form into a reusable component and added a shared header/footer and responsive welcome layout using the existing book mark. It added Arabic and English copy, logical CSS properties for both directions, a keyboard skip link and visible focus, and restrained decorative motion disabled by reduced-motion settings. No buttons were added for unfinished quiz or login flows. README, PLAN, and D10 were updated while implementing.
+
+**Verification actually performed:** The first local lint run found a Next.js rule against a plain home-page anchor; the assistant changed it to Next's Link. The first type check used the host's Node.js 18 and failed because Prisma requires Node.js 24; rerunning the full lint/type check with the project's Node.js 24 passed. A subsequent Git status inspection exposed that an attempted CSS patch had not changed the file despite the editing tool returning without an error. The assistant rewrote the stylesheet, confirmed it appeared in the diff and compiled CSS asset, and reran the production build successfully with Node.js 24. Docker startup, HTTP smoke checks, phone/desktop appearance, keyboard behavior, contrast, and reduced-motion behavior remain for the applicant to check. No Claude review of this slice or hosted CI result is claimed. The assistant did not stage, commit, push, or merge.
+
 ## Implementation workflow
 
 For each substantial feature, record:
