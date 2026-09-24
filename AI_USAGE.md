@@ -86,7 +86,7 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Task given to AI:** Start the database/demo/import milestone, using multiple meaningful commits within one PR, with the applicant retaining all staging, commits, and pushes.
 
-**Starting evidence:** Read-only inspection found a clean `main` with the bootstrap merge `a2550d8`. The applicant reported Claude's bootstrap review complete with no changes requested. The assistant proposed `feat/data-imports` and is preparing only the first commit-sized part before demo data and imports.
+**Starting evidence:** Read-only inspection found a clean `main` with the bootstrap merge `a2550d8`. The applicant reported Claude's bootstrap review complete with no changes requested. The assistant proposed `feat/data-imports` and prepared the first commit-sized part before demo data and imports.
 
 **Work performed:** Added a pinned stable Prisma/SQLite adapter, schema and migration with database CHECK constraints and composite foreign keys, a shared connection factory, startup migrations and persistent Docker volume, database readiness, and 15 real-database integration tests. Updated the container/CI build to run those tests and documented decisions D17–D18. This implements stored-data constraints, not authorization or complete quiz behavior.
 
@@ -97,6 +97,14 @@ These are observed planning contributions. They do not imply the applicant has r
 **Verification:** Prisma schema validation/generation, local lint/type checks, all 15 SQLite integration tests, and the production build passed with the final dependencies. The tests apply the actual migration to isolated temporary files and clean up only their own fixtures. The final Docker image repeated lint/type/build and all 15 tests. Compose became healthy after migrations; two HTTP smoke tests passed. A temporary database record survived a container restart, and the assistant removed that record afterward. A final npm audit reported zero vulnerabilities. These checks establish the database foundation and startup path, not the unfinished login/quiz/import flows. Hosted CI and visual behavior remain unverified here.
 
 **Scope boundary:** Sample accounts, seed idempotency, CSV/XLSX parsers/templates, and import transactions are the next two parts. No browser inspection, hosted CI run, or Claude review of this database change has been performed by this assistant. No staging, commit, push, or branch change has been performed.
+
+### Session 05 - Repeat-safe demo data (second part of milestone 3)
+
+**Task given to AI:** Implement the next step after the applicant created `566f53e` on `feat/data-imports`. The applicant continues to own staging and commits.
+
+**Work performed:** Added a transactional first-use initializer for 60 students, four teachers, one administrator, three published 15-question quizzes, one draft, and six synthetic finished attempts. Added reusable scrypt hashing/verification for the later login service, demo fixtures with varied points and one negative-marking example, a local seed command, automatic Docker startup seeding, and matching README credentials and decision D20.
+
+**Verification:** Local lint/type checks and all 19 SQLite tests passed, including four new seed tests. The original test command was accidentally split across shell environment scopes: `npm run check` used the bundled Node 24, while `npm test` initially picked system Node 18 and Prisma refused to start. Rerunning the test with Node 24 active passed. The final Docker image repeated lint/type checks, all 19 tests, and the production build. Compose initialized demo data before the server started and became healthy; its database held 65 users, three classes, four quizzes, and six finished attempts. After a container restart, the seed timestamp, quiz closing timestamp, and record counts were unchanged, and startup reported that existing records were preserved. Both HTTP smoke tests passed. No UI, login, hosted CI, or CSV/XLSX behavior is claimed.
 
 ## Implementation workflow
 

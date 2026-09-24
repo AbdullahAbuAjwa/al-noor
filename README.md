@@ -2,7 +2,7 @@
 
 A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
-**Current status: database foundation.** The application has a persistent SQLite schema, startup migrations, an Arabic welcome page, and a database readiness endpoint. Demo data, imports, login, and quiz workflows are not available yet.
+**Current status: database and demo data.** The application has a persistent SQLite schema, automatic first-use demo data, an Arabic welcome page, and a database readiness endpoint. Imports, login, and quiz workflows are not available yet.
 
 ## Planned experience
 
@@ -26,9 +26,19 @@ Stop with `Ctrl+C`, or run `docker compose down` from another terminal. If port 
 
 `GET /api/health` queries an application table and returns `{"status":"ok"}` with caching disabled. If the database cannot be queried, it returns HTTP 503 without connection details. This checks schema connectivity, not quiz correctness.
 
-Startup applies the committed Prisma migrations before starting the server. SQLite lives at `/app/data/al-noor.db` in the Compose `app-data` volume. `docker compose down` preserves this volume; ordinary restarts reapply only pending migrations and do not reset records. Do not use `down --volumes` unless you deliberately want to delete the application data.
+Startup applies the committed Prisma migrations and initializes demo data once before starting the server. SQLite lives at `/app/data/al-noor.db` in the Compose `app-data` volume. `docker compose down` preserves this volume; ordinary restarts reapply only pending migrations and do not reset records, sample edits, or quiz availability times. Do not use `down --volumes` unless you deliberately want to delete the application data.
 
-Demo initialization and CSV/XLSX import commands are the next two parts of this milestone. No demo accounts or passwords have been created yet.
+The demo creates 60 students across `10A`, `10B`, and `11A`, four teachers, one administrator, three published 15-question quizzes, one teacher draft, and six synthetic completed attempts. Student `01` in each class has no attempt, so those accounts remain ready for the later walkthrough. Published quiz availability is set relative to **first initialization** (opens two hours before; closes 14 days after). A later restart never moves that window.
+
+| Role                                | Demo username    | Demo password      |
+| ----------------------------------- | ---------------- | ------------------ |
+| Administrator                       | `admin`          | `AdminDemo2026!`   |
+| Teacher (math; classes 10A and 10B) | `teacher.math`   | `TeacherDemo2026!` |
+| Student (class 10A; no attempt)     | `student.10a.01` | `StudentDemo2026!` |
+
+Other teachers are `teacher.science`, `teacher.english`, and `teacher.history`; their demo password is the same teacher password. Student usernames follow `student.<class>.01` through `.20`, for example `student.11a.01`; they share the student demo password. Passwords are stored as salted scrypt hashes. **Login is not implemented yet**, so these accounts are currently database fixtures for the next features, not interactive sign-in options. These documented public credentials are for this assessment demo, not a real deployment.
+
+For an already migrated local database, `npm run db:seed` initializes the same sample data; rerunning it is safe. Seeding deliberately refuses a database that already contains unmarked user/class/quiz/attempt records instead of mixing a public demo roster with existing data. A fresh Compose volume needs no manual seed command.
 
 ## Local development (optional)
 
@@ -37,6 +47,7 @@ Use Node.js 24 (`.nvmrc` records the tested patch version) and its bundled npm. 
 ```sh
 npm ci
 npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
@@ -59,7 +70,7 @@ The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 r
 5. Sign in as an administrator to inspect center-wide results.
 6. Try both interface languages and a phone-sized viewport.
 
-The seed will include approximately 60 students across `10A`, `10B`, and `11A`, four teachers, an administrator, and Arabic and English quizzes. Separate synthetic completed attempts will make reports useful without consuming the primary demo student's available quiz.
+The seeded accounts and quizzes above will become usable when login and the quiz journeys are implemented. Synthetic completed attempts are separate from each class's primary demo student.
 
 ## Verification
 
@@ -71,7 +82,7 @@ npm test
 npm run build
 ```
 
-The Docker build runs lint/type checks, the database integration suite, and the production build, so these checks also work without host Node.js. Database tests apply the committed migrations to isolated temporary files; they never use your configured application database. They cover duplicate/concurrent attempts, invalid relationships, numeric/status constraints, transaction rollback, repeat migration, and persistence after reconnecting. To verify the running container:
+The Docker build runs lint/type checks, the database integration suite, and the production build, so these checks also work without host Node.js. Database tests apply the committed migrations to isolated temporary files; they never use your configured application database. They cover duplicate/concurrent attempts, invalid relationships, numeric/status constraints, transaction rollback, repeat migration, and persistence after reconnecting. Seed tests cover the roster, demo credentials, sample scores, repeat runs, and refusing an occupied unmarked database. To verify the running container:
 
 ```sh
 docker compose up --build --detach --wait --wait-timeout 120
@@ -94,4 +105,4 @@ Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz uni
 
 ## Current limitations
 
-This is a database foundation, not a completed assessment. Imports, sample accounts, authentication, quiz behavior, reports, and language switching remain unimplemented. Foreign keys and checks protect stored relationships, but role authorization, complete quiz-publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The temporary welcome page has Arabic and English copy prepared, but currently renders Arabic only. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
+This is a database and sample-data foundation, not a completed assessment. Imports, authentication, interactive quiz behavior, reports, and language switching remain unimplemented. Foreign keys and checks protect stored relationships, but role authorization, complete quiz-publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The temporary welcome page has Arabic and English copy prepared, but currently renders Arabic only. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).

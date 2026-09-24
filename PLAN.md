@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: bootstrap was merged into `main` in `a2550d8`. The applicant reported a completed Claude review with no changes requested. Milestone 3 is split into the three commit-sized parts below; the database foundation is implemented and locally verified, pending the applicant's first commit. Demo data and imports have not been implemented.
+Current progress: bootstrap was merged into `main` in `a2550d8`; the applicant reported its Claude review complete. The database foundation was committed as `566f53e` on `feat/data-imports`. The second part adds repeat-safe demo data and has passed local/container checks; it awaits the applicant's next commit. CSV/XLSX imports remain pending.
 
 ## Objective and source
 
@@ -18,7 +18,7 @@ The client's scenario is fictional. Product behavior beyond the brief is recorde
 
 ### Core delivery
 
-- [ ] One-command local startup, migrations, persistent storage, and first-use sample initialization.
+- [x] One-command local startup, migrations, persistent storage, and first-use sample initialization.
 - [ ] Login, logout, server-side sessions, and student/teacher/administrator authorization.
 - [ ] Arabic by default, selectable English, and responsive screens as each feature is built.
 - [ ] Teacher quiz drafts, question editing, assignment to authorized classes, and publication.

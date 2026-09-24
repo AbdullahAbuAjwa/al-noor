@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **Bootstrap is merged; the database foundation is locally verified. Demo data, imports, and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **Bootstrap and the database foundation are committed; first-use demo data has passed local and container checks. Imports and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. This record distinguishes those from engineering assumptions. Accepted plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -218,6 +218,20 @@ The server and migration CLI use the same normalized file path. Application conn
 
 **Sources:** [Deepmerge advisory](https://github.com/advisories/GHSA-ggr8-5vv4-36mx), [version 8 changes](https://github.com/RebeccaStevens/deepmerge-ts/releases/tag/v8.0.0), [MySQL authentication advisory](https://github.com/advisories/GHSA-3f6p-5ww8-9rcr), and [MySQL compression advisory](https://github.com/advisories/GHSA-rgwj-5xj2-c3m3). Actual verification outcomes are recorded in AI_USAGE.md.
 
+## D20 - One-time demo initialization and public sample accounts
+
+**Context:** A reviewer needs meaningful data from `docker compose up --build`, including accounts for each role and report examples. Ordinary restarts must preserve actual work and the quiz window already shown to students.
+
+**Decision:** Run the demo initializer after migrations, within a single database transaction protected by a unique `SeedRun` marker. On later starts, return without rewriting records or reanchoring dates. If an unmarked database already has users, classes, quizzes, or attempts, fail with an explicit message rather than mix public demo identities into it. Provide the same repeat-safe `npm run db:seed` command for local development.
+
+Create three pilot classes with 20 students each, four teachers with explicit class memberships, and an administrator. Give each account a salted scrypt hash; publish only documented synthetic credentials for the assessment. Seed three complete 15-question quizzes, one draft, and six finished attempts for students 02 and 03 in each class. Leave student 01 untouched so the later login/attempt walkthrough starts fresh. Seeded sample results are arithmetic examples, including 7.75/18 for a partial math attempt with a 25% wrong-answer penalty; the actual grading service remains a separate implementation step.
+
+Set published windows from the first seed time (two hours before through 14 days after) so a newly created volume is immediately usable. Duration is 20 minutes, with the same per-question point variation and negative marking policy represented in the data. Existing volume restarts never move these dates. After 14 days, preserve historical results; a deliberate reset of the demo volume or a new quiz is needed for another fresh demonstration.
+
+**Trade-off:** Seed data adds startup work on the first run, mainly hashing 65 individual account passwords. Hashes are computed before the write transaction to keep its lock short. Public example passwords are appropriate only for this isolated assessment sample and would require replacement before real use. CLI seeding cannot resolve arbitrary existing records automatically; refusing that ambiguous case protects data.
+
+**Verification:** Tests use the real migration and SQLite adapter to check roster counts, credentials, role/class links, quiz windows, score examples, an unchanged repeat run, refusal/rollback on occupied unmarked storage, and the CLI command. Docker first-start and restart evidence is recorded in AI_USAGE.md.
+
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
@@ -235,7 +249,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, and integration tests are implemented and locally verified in Docker. Demo accounts, imports, authentication, quiz authoring, attempts, scoring, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
+Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, integration tests, and demo data are implemented and locally verified in Docker. Demo login, imports, quiz authoring, active attempts, grading services, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 
