@@ -775,6 +775,16 @@ fieldset.field legend {
 /* With the script running, answers save on selection; the button is a
    no-JavaScript fallback. */
 .answer-form[data-enhanced] .answer-form__save { display: none; }
+.table-scroll {
+  overflow-x: auto;
+  margin-block-start: 1rem;
+}
+.table-scroll .table { min-inline-size: 36rem; }
+.result-score {
+  margin-block: 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 800;
+}
 .back-link { margin-block: 1.25rem 0; }
 .back-link a,
 .card p a {

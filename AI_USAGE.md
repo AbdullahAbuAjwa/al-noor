@@ -249,6 +249,16 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** `npm run check` passed; `npx vitest run` passed 133 tests (6 new for answers). The Docker image rebuilt with lint/type checks, the same 133 tests, and the production build; against the applicant's container 12 HTTP smoke tests passed and 4 write tests were skipped by design. The first write-enabled run on a throwaway Compose project failed one check: the saved choice was not found after a reload. Inspecting the served HTML showed the choice was saved and marked, but React writes `checked=""` before `value`, which the smoke pattern had assumed the other way round. The check now reads the whole input tag. A rerun on a fresh throwaway database (the fixed script run from the host with Node.js 24 against the stack) passed all 16, and the stack and volume were removed. The saving behavior was not checked in a browser here.
 
+### Session 21 - Submission, grading, and results (milestones 8-10, time-boxed)
+
+**Direction:** With under an hour left, the applicant combined the remaining feature milestones into one branch and PR (`feat/submission-and-results`) and asked for the fastest path that keeps quality, followed by one final verification/documentation branch. The offline answer queue from D08 was deliberately left out (D27).
+
+**Work performed:** A grading function with an explicit precision policy, idempotent finalization for submission and for expiry-on-view, a submit endpoint, the student's result card and scores on the student list, a results service and table for the owning teacher and for the administrator, and the administrator's list of published quizzes. D27 records the decisions.
+
+**Expected values:** Grading expectations were worked out by hand from D06 and the seed (the 7.75/18 example, rounding 0.625 to 0.63, the zero floor on the total), not taken from the function's output.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 139 tests (6 new for grading and results). The Docker image rebuilt with lint/type checks, the same 139 tests, and the production build; against the applicant's container 13 HTTP smoke tests passed and 5 write tests were skipped by design. On a fresh throwaway Compose project with `SMOKE_WRITES=1`, all 18 passed, including submitting, seeing the result, a late save refused, and a repeated submission; that project and its volume were removed. The result pages were not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:

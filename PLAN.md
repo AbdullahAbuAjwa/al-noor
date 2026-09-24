@@ -26,8 +26,8 @@ This plan was developed with substantial applicant–Codex discussion before app
 - [x] Teacher quiz drafts, question editing, assignment to authorized classes, and publication.
 - [x] One timed attempt per student and quiz, resumable before its deadline.
 - [ ] Answer autosave, visible save status, bounded connection recovery, and repeat-safe submission.
-- [ ] Server-side weighted grading with configurable negative marking and a final score floor of zero.
-- [ ] Student results, teacher results for owned quizzes, and center-wide administrator reports.
+- [x] Server-side weighted grading with configurable negative marking and a final score floor of zero.
+- [x] Student results, teacher results for owned quizzes, and center-wide administrator reports.
 - [x] CSV and XLSX templates and an authorized, documented import command for teachers, students, and quiz data.
 - [ ] Risk-based automated tests, fresh-start verification, and accurate documentation.
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DraftSettingsForm } from "@/components/draft-settings-form";
 import { QuestionForm } from "@/components/question-form";
+import { ResultsTable } from "@/components/results-table";
 import { PageHeader } from "@/components/page-header";
 import { SiteShell } from "@/components/site-shell";
 import {
@@ -18,6 +19,7 @@ import { getDatabase } from "@/server/db";
 import { getTeacherQuiz, listTaughtClasses } from "@/server/quizzes/drafts";
 import { suggestedWindow } from "@/server/quizzes/publish";
 import { listQuizQuestions } from "@/server/quizzes/questions";
+import { getQuizResults } from "@/server/results/results";
 import { toZonedInput } from "@/server/time/zone";
 
 export default async function TeacherQuizPage({
@@ -50,6 +52,10 @@ export default async function TeacherQuizPage({
     0,
   );
   const suggested = suggestedWindow();
+  // Owner-only: the service also filters by this teacher's id.
+  const results = isDraft
+    ? null
+    : await getQuizResults(db, quiz.id, new Date(), user.id);
 
   return (
     <SiteShell locale={locale} currentPath={path} user={user}>
@@ -140,6 +146,7 @@ export default async function TeacherQuizPage({
               <p className="muted">{copy.authoring.lockedNote}</p>
             )}
           </section>
+          {results ? <ResultsTable locale={locale} results={results} /> : null}
           <section className="card" id="questions" aria-labelledby="questions-title">
             <h2 id="questions-title">
               {copy.questions.title} ({questions.length})

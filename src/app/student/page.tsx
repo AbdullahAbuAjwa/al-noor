@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { SiteShell } from "@/components/site-shell";
-import { formatDateTime, formatPercentFromBps } from "@/i18n/format";
+import {
+  formatDateTime,
+  formatHundredths,
+  formatPercentFromBps,
+} from "@/i18n/format";
 import { getLocale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { requireRole } from "@/server/auth/current-user";
@@ -75,6 +79,17 @@ export default async function StudentHomePage() {
                       </dd>
                     </div>
                   </dl>
+                  {quiz.score ? (
+                    <p className="summary-line" dir="auto">
+                      {copy.results.score}:{" "}
+                      <span dir="ltr">
+                        {copy.results.scoreValue(
+                          formatHundredths(quiz.score.scoreHundredths),
+                          formatHundredths(quiz.score.maxScoreHundredths),
+                        )}
+                      </span>
+                    </p>
+                  ) : null}
                   <p className="quiz-card__action">
                     <Link
                       className={
