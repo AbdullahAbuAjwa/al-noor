@@ -229,6 +229,26 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** `npm run check` passed; `npx vitest run` passed 119 tests (20 new for publication). The Docker image rebuilt with lint/type checks, the same 119 tests, and the production build, and the container became healthy. Against the applicant's running container, 10 HTTP smoke tests passed and the 2 write tests were skipped by design; on a throwaway Compose project with `SMOKE_WRITES=1`, all 12 passed, including a draft that stays hidden, is refused while empty, is published after a question is added, appears only for its class, and then refuses edits. That project and its volume were removed. The pages were not checked in a browser here.
 
+### Session 19 - Timed attempts, part 1: start and resume
+
+**Direction:** After the quiz-authoring PR was merged, the applicant asked for milestone 7 in two parts, to save time by running tests and Docker checks once at the end of each part, and started part 1.
+
+**Work performed:** An attempt service (class and publication eligibility, server-time window check, persisted deadline, idempotent start settled by the unique index, and an attempt view that never selects the correct option), a start endpoint, a quiz rules page with the time available now, an attempt page with a countdown based on the server's remaining time, links from the student list, and a role-generic form guard shared with the teacher endpoints. Decisions are in D26.
+
+**Expected values:** Deadlines, the late-start cap, and the 18-point total come from the seed (20-minute quizzes, 15 questions with every fifth worth 2 points) and D05, worked out by hand.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 127 tests (8 new for attempts, including two simultaneous starts on separate connections). The Docker image rebuilt with lint/type checks, the same 127 tests, and the production build; against the applicant's container 11 HTTP smoke tests passed and 3 write tests were skipped by design. On a throwaway Compose project with `SMOKE_WRITES=1`, all 14 passed, including starting twice without the deadline changing; that project and its volume were removed. The countdown and pages were not checked in a browser here.
+
+### Session 20 - Timed attempts, part 2: saving answers
+
+**Direction:** After committing part 1 (`404d4e6`), the applicant asked for part 2.
+
+**Work performed:** An answer service (conditional write on the student's own open attempt before its server-time deadline, question/option ownership checks, save, replace, and clear with rollback on invalid input), an answers endpoint that returns JSON to the page's script and a redirect to plain form posts, and a question component that works as a normal form without JavaScript and saves on selection with it, sending one request at a time per question and showing only acknowledged saves. D26 and D18 record the decisions.
+
+**Corrections from actual checks:** The first version of the simultaneous-save test used two database connections inside the test process and failed after the 5-second busy timeout. The cause is better-sqlite3's synchronous lock wait, which blocks the event loop the lock holder needs. The server does not use that arrangement (one shared client per process, D18), so the test now issues both saves through one shared client, as the server would. The finding is recorded in D18. React's lint rules also rejected setting "enhanced" state in an effect; the component uses `useSyncExternalStore` to tell the server HTML from the running page. A retry path that could drop a newer choice after a failed save was corrected before testing.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 133 tests (6 new for answers). The Docker image rebuilt with lint/type checks, the same 133 tests, and the production build; against the applicant's container 12 HTTP smoke tests passed and 4 write tests were skipped by design. The first write-enabled run on a throwaway Compose project failed one check: the saved choice was not found after a reload. Inspecting the served HTML showed the choice was saved and marked, but React writes `checked=""` before `value`, which the smoke pattern had assumed the other way round. The check now reads the whole input tag. A rerun on a fresh throwaway database (the fixed script run from the host with Node.js 24 against the stack) passed all 16, and the stack and volume were removed. The saving behavior was not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:

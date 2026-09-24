@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { SiteShell } from "@/components/site-shell";
 import { formatDateTime, formatPercentFromBps } from "@/i18n/format";
@@ -31,7 +32,9 @@ export default async function StudentHomePage() {
               {quizzes.map((quiz) => (
                 <li key={quiz.id} className="card quiz-card">
                   <div className="quiz-card__heading">
-                    <h2>{quiz.title}</h2>
+                    <h2>
+                      <Link href={`/student/quizzes/${quiz.id}`}>{quiz.title}</Link>
+                    </h2>
                     <span
                       className={`badge badge--${quiz.attemptStatus ? "done" : quiz.availability}`}
                     >
@@ -72,6 +75,27 @@ export default async function StudentHomePage() {
                       </dd>
                     </div>
                   </dl>
+                  <p className="quiz-card__action">
+                    <Link
+                      className={
+                        quiz.attemptStatus === "IN_PROGRESS" ||
+                        (!quiz.attemptStatus && quiz.availability === "open")
+                          ? "button button--primary"
+                          : "button button--quiet"
+                      }
+                      href={
+                        quiz.attemptStatus === "IN_PROGRESS"
+                          ? `/student/quizzes/${quiz.id}/attempt`
+                          : `/student/quizzes/${quiz.id}`
+                      }
+                    >
+                      {quiz.attemptStatus === "IN_PROGRESS"
+                        ? copy.attempt.resume
+                        : !quiz.attemptStatus && quiz.availability === "open"
+                          ? copy.attempt.start
+                          : copy.attempt.details}
+                    </Link>
+                  </p>
                 </li>
               ))}
             </ul>

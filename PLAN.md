@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestones 1–5 are merged into `main` (latest `d176e91`, authentication and role-based access). Milestone 6 (quiz authoring) is in progress on `feat/quiz-authoring`: a sign-in language fix, part 1 (draft settings), part 2 (question editing), and part 3 (publication with an availability window). Attempts, grading, and reports remain pending.
+Current progress: milestones 1–6 are merged into `main` (latest `6f72c03`, quiz authoring and publishing). Milestone 7 is on `feat/timed-attempts`: part 1 starts and resumes timed attempts; part 2 saves answers on the server as they are chosen. Offline recovery beyond an in-page retry, submission and grading, and reports remain pending.
 
 ## Objective and source
 
@@ -24,7 +24,7 @@ This plan was developed with substantial applicant–Codex discussion before app
 - [x] Login, logout, server-side sessions, and student/teacher/administrator authorization (home pages; each later feature adds its own checks).
 - [ ] Arabic by default, selectable English, and responsive screens as each feature is built.
 - [x] Teacher quiz drafts, question editing, assignment to authorized classes, and publication.
-- [ ] One timed attempt per student and quiz, resumable before its deadline.
+- [x] One timed attempt per student and quiz, resumable before its deadline.
 - [ ] Answer autosave, visible save status, bounded connection recovery, and repeat-safe submission.
 - [ ] Server-side weighted grading with configurable negative marking and a final score floor of zero.
 - [ ] Student results, teacher results for owned quizzes, and center-wide administrator reports.

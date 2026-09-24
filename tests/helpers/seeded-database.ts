@@ -15,10 +15,14 @@ export function seededDatabaseFixture(seededAt: Date) {
 
   return {
     async setup() {
-      execFileSync(process.execPath, ["--import", "tsx", "scripts/migrate.ts"], {
-        env: { ...process.env, DATABASE_URL: `file:${template}` },
-        stdio: "pipe",
-      });
+      execFileSync(
+        process.execPath,
+        ["--import", "tsx", "scripts/migrate.ts"],
+        {
+          env: { ...process.env, DATABASE_URL: `file:${template}` },
+          stdio: "pipe",
+        },
+      );
       const db = await createDatabaseClient(`file:${template}`);
       await seedDemoData(db, seededAt);
       await db.$queryRawUnsafe("PRAGMA wal_checkpoint(TRUNCATE)");
@@ -29,6 +33,11 @@ export function seededDatabaseFixture(seededAt: Date) {
       const file = join(directory, "test.db");
       copyFileSync(template, file);
       return createDatabaseClient(`file:${file}`);
+    },
+    // A second, independent connection to the current test's file, for
+    // exercising simultaneous requests the way two server requests would.
+    async connectAgain(): Promise<Database> {
+      return createDatabaseClient(`file:${join(directory, "test.db")}`);
     },
     async close(db: Database | undefined) {
       await db?.$disconnect();
