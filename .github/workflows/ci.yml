@@ -9,14 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  bootstrap:
+  application:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Build, lint, type-check, and start the production container
+      - name: Build, lint, type-check, test the database, and start the application
         run: docker compose up --build --detach --wait --wait-timeout 120
       - name: Verify the running application and bundled assets
         run: >-

@@ -4,10 +4,10 @@ This is a factual work log, not a claim that every planned feature or verificati
 
 ## Tools actually used in this repository's work
 
-- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, and application bootstrap.
+- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, application bootstrap, database foundations, demo data, and operator imports.
 - **Read-only supporting tools:** PDF text extraction and page rendering, inspection of the supplied email screenshots, official web documentation, and local directory/Git inspection.
 
-The applicant chose Claude Code for subsequent feature reviews. **No Claude review of this repository has been observed or recorded yet.** No exact model identifier or percentage of AI-written code is asserted.
+The applicant chose Claude Code for feature reviews and reported that the bootstrap review completed with no changes requested. Codex has not inspected that review transcript. No exact model identifier or percentage of AI-written code is asserted.
 
 ## Applicant direction
 
@@ -81,6 +81,46 @@ These are observed planning contributions. They do not imply the applicant has r
 - Package/lock consistency, workflow YAML, Markdown links/fences, and `git diff --check` passed. The first auxiliary documentation-check attempt could not load Python's optional YAML module; the check was rerun successfully using the already installed JavaScript YAML parser, without adding a dependency.
 
 **Remaining verification and handoff:** The applicant requested ownership of opening the app and checking its interface. No successful browser or phone visual inspection is claimed. No Claude review, hosted CI run, or applicant code review has been claimed. The application was left running at `http://localhost:3000` for the applicant. The assistant has not staged, committed, or pushed any change.
+
+### Session 04 - Database foundation (first part of milestone 3)
+
+**Task given to AI:** Start the database/demo/import milestone, using multiple meaningful commits within one PR, with the applicant retaining all staging, commits, and pushes.
+
+**Starting evidence:** Read-only inspection found a clean `main` with the bootstrap merge `a2550d8`. The applicant reported Claude's bootstrap review complete with no changes requested. The assistant proposed `feat/data-imports` and prepared the first commit-sized part before demo data and imports.
+
+**Work performed:** Added a pinned stable Prisma/SQLite adapter, schema and migration with database CHECK constraints and composite foreign keys, a shared connection factory, startup migrations and persistent Docker volume, database readiness, and 15 real-database integration tests. Updated the container/CI build to run those tests and documented decisions D17–D18. This implements stored-data constraints, not authorization or complete quiz behavior.
+
+**Corrections from actual checks:** A missing SQLite file caused Prisma's migration deployment to fail with a generic schema-engine error, including outside the shell sandbox. A controlled comparison succeeded when an empty file already existed. The startup wrapper now creates the file without truncation; repeat-migration tests protect existing records. Invoking the `tsx` CLI hit a sandbox IPC restriction, so the scripts use Node's `--import tsx` loader without that unnecessary IPC listener. A Vitest config module-format warning was resolved by using an explicit `.mts` config file.
+
+**Dependency review:** npm audit initially reported four high-severity entries through Prisma's pinned config/MySQL packages. The assistant checked the advisories, reviewed Deepmerge 8's breaking changes and Prisma's actual configuration-loading call, then added scoped overrides (D19) instead of accepting an automatic major downgrade. Installation with the overrides reported zero vulnerabilities. Local lint/type checks, all 15 integration tests, and the production build passed with the patched dependencies.
+
+**Verification:** Prisma schema validation/generation, local lint/type checks, all 15 SQLite integration tests, and the production build passed with the final dependencies. The tests apply the actual migration to isolated temporary files and clean up only their own fixtures. The final Docker image repeated lint/type/build and all 15 tests. Compose became healthy after migrations; two HTTP smoke tests passed. A temporary database record survived a container restart, and the assistant removed that record afterward. A final npm audit reported zero vulnerabilities. These checks establish the database foundation and startup path, not the unfinished login/quiz/import flows. Hosted CI and visual behavior remain unverified here.
+
+**Scope boundary:** Sample accounts, seed idempotency, CSV/XLSX parsers/templates, and import transactions are the next two parts. No browser inspection, hosted CI run, or Claude review of this database change has been performed by this assistant. No staging, commit, push, or branch change has been performed.
+
+### Session 05 - Repeat-safe demo data (second part of milestone 3)
+
+**Task given to AI:** Implement the next step after the applicant created `566f53e` on `feat/data-imports`. The applicant continues to own staging and commits.
+
+**Work performed:** Added a transactional first-use initializer for 60 students, four teachers, one administrator, three published 15-question quizzes, one draft, and six synthetic finished attempts. Added reusable scrypt hashing/verification for the later login service, demo fixtures with varied points and one negative-marking example, a local seed command, automatic Docker startup seeding, and matching README credentials and decision D20.
+
+**Verification:** Local lint/type checks and all 19 SQLite tests passed, including four new seed tests. The original test command was accidentally split across shell environment scopes: `npm run check` used the bundled Node 24, while `npm test` initially picked system Node 18 and Prisma refused to start. Rerunning the test with Node 24 active passed. The final Docker image repeated lint/type checks, all 19 tests, and the production build. Compose initialized demo data before the server started and became healthy; its database held 65 users, three classes, four quizzes, and six finished attempts. After a container restart, the seed timestamp, quiz closing timestamp, and record counts were unchanged, and startup reported that existing records were preserved. Both HTTP smoke tests passed. No UI, login, hosted CI, or CSV/XLSX behavior is claimed.
+
+### Session 06 - CSV/XLSX operator imports (third part of milestone 3)
+
+**Task given to AI:** Implement the next step after the applicant committed the demo-data slice as `0695dbe` on `feat/data-imports`.
+
+**Work performed:** Added equivalent teachers/students/quiz templates in both formats, a reproducible template generator, a CLI importer, shared validation, role/class checks, and transactional persistence. Imported quizzes are drafts. Account passwords are hashed before writing. The reader bounds files and workbook expansion and rejects formula, macro, and merged-cell XLSX content. Updated the Docker runtime to include templates and documented the command and input contract in README and D21.
+
+**Tool and correction notes:** Checked current package metadata and official CSV/XLSX documentation. A trial dependency audit found a moderate transitive advisory in the larger `ExcelJS` option; the selected smaller reader, development-only writer, parser, and ZIP helper had zero reported advisories during installation. The first local lint pass caught an unused test import, which was removed. Tests exposed no database rollback failure. An additional review found that the XLSX reader trims strings by default, which could silently change an imported password; the parser now asks it to preserve raw strings before validation.
+
+**Verification actually performed:** After the string-preservation and XML-decoding adjustments, local lint/type checks, all 29 tests (10 for imports), and the production build passed. The final Docker build repeated lint/type checking, all 29 tests, and the production build; Compose reached healthy status. In a disposable container with an isolated temporary SQLite database, migrations and seed ran, then the documented CLI imported one teacher from CSV, one student from XLSX, and three quiz questions into a draft from XLSX. Both HTTP smoke tests passed against the running container. A final npm audit reported zero vulnerabilities. The import tests cover equivalent CSV/XLSX writes, rollback, invalid references/quiz rows, quoted multiline CSV, malformed/unsupported workbook inputs, and the CLI. Hosted CI, browser UI, and Claude review of this change remain unverified. The assistant did not stage, commit, push, or change branches.
+
+### Session 07 - Claude review follow-up: Excel percentages
+
+**Input and decision:** The applicant relayed a concrete Claude review finding: Excel stores a cell displayed as `25%` as numeric `0.25`, which the importer would treat as a 0.25% negative-marking penalty. The assistant did not receive the full Claude review transcript. To prevent a silent grading-rule change, the XLSX importer now requires text in `penalty_percent` and rejects numeric cells with a row/column error. This is stricter than rejecting only fractions because percentage-formatted cells can contain other numeric values too. CSV behavior and the existing text-cell XLSX template stay the same. README and D21 explain the trade-off.
+
+**Verification actually performed:** A new regression test builds a workbook with every quiz row's penalty cell displayed as `25%` and stored as numeric `0.25`, with the referenced teacher present; it asserts rejection and no new quiz. It also checks that a plain numeric `25` is rejected. Existing XLSX-template tests still import text `25` as `penaltyBps = 2500`. After strengthening that test, local lint/type checks and all 30 tests passed. The parser change passed a Docker build with lint/type checks, 30 tests, and a production build; the container became healthy and both HTTP smoke tests passed. The Docker build's regression-test snapshot preceded the final strengthening of that test, while the full local suite used the final test. No staging, commit, push, or branch change was performed by the assistant.
 
 ## Implementation workflow
 

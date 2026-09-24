@@ -1,0 +1,2 @@
+# Keep migrations tied to SQLite; a database change needs a migration plan.
+provider = "sqlite"

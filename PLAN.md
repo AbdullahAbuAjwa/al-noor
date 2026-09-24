@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestone 1 was committed by the applicant (`d8db05f`). Milestone 2 is implemented on `chore/bootstrap`: local lint/type checks, the production Docker build/startup, and two HTTP smoke checks passed. Applicant visual inspection and Claude review are pending before the applicant's commit/merge. No business features have been implemented.
+Current progress: bootstrap was merged into `main` in `a2550d8`; the applicant reported its Claude review complete. The database foundation (`566f53e`) and repeat-safe demo data (`0695dbe`) are committed on `feat/data-imports`. CSV/XLSX operator imports are implemented and verified locally as the third part, ready for the applicant's review and commit.
 
 ## Objective and source
 
@@ -18,7 +18,7 @@ The client's scenario is fictional. Product behavior beyond the brief is recorde
 
 ### Core delivery
 
-- [ ] One-command local startup, migrations, persistent storage, and first-use sample initialization.
+- [x] One-command local startup, migrations, persistent storage, and first-use sample initialization.
 - [ ] Login, logout, server-side sessions, and student/teacher/administrator authorization.
 - [ ] Arabic by default, selectable English, and responsive screens as each feature is built.
 - [ ] Teacher quiz drafts, question editing, assignment to authorized classes, and publication.
@@ -26,7 +26,7 @@ The client's scenario is fictional. Product behavior beyond the brief is recorde
 - [ ] Answer autosave, visible save status, bounded connection recovery, and repeat-safe submission.
 - [ ] Server-side weighted grading with configurable negative marking and a final score floor of zero.
 - [ ] Student results, teacher results for owned quizzes, and center-wide administrator reports.
-- [ ] CSV and XLSX templates and an authorized, documented import command for teachers, students, and quiz data.
+- [x] CSV and XLSX templates and an authorized, documented import command for teachers, students, and quiz data.
 - [ ] Risk-based automated tests, fresh-start verification, and accurate documentation.
 
 ### Enhancements after the core passes
@@ -79,6 +79,14 @@ Every feature milestone includes relevant tests and updates to DECISIONS.md and 
 Genuine fixes and scope changes get their own commits when appropriate. A milestone may be split into smaller coherent commits. Do not defer all testing to milestone 11 or all documentation to milestone 12. All commit subjects are handoff suggestions for the user, not authorization for the assistant to stage, commit, or push.
 
 ### Branch and review workflow
+
+Milestone 3 uses the proposed branch `feat/data-imports` and separate applicant-created commits:
+
+1. `feat: add SQLite schema, migrations and database constraints` — schema, persistent storage, automatic migrations, readiness check, and real-database tests.
+2. `feat: add repeat-safe demo data and sample accounts` — deterministic sample identities and content, password hashes, relative first-use availability, and seed repeat-safety tests.
+3. `feat: add validated CSV and XLSX imports` — documented templates, format readers, shared validation, transactional CLI import, and invalid-input/rollback tests.
+
+Hand off each verified part for a commit before starting the next, as the applicant owns staging and commits. Keep the PR open until all three parts are implemented and reviewed; the first part alone does not complete milestone 3.
 
 Use one short-lived branch at a time, starting from the updated `main` after the previous feature is merged. Keep coherent intermediate commits; a feature branch need not contain only one commit. The first implementation branch is `chore/bootstrap` for milestone 2 only.
 

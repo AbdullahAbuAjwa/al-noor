@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **Bootstrap is implemented and locally verified; business features remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **The database and demo-data commits are on `feat/data-imports`; CSV/XLSX imports are locally verified and ready for the applicant's commit. Login and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. This record distinguishes those from engineering assumptions. Accepted plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -184,6 +184,70 @@ Use a multi-stage Docker build and Next's standalone output. Explicitly copy bot
 
 **Trade-off / evidence:** The file must stay aligned with AGENTS.md and the agreed workflow. It guides behavior; it is not a technical permission boundary or evidence that a review happened. The applicant assesses findings, and actual review outcomes are recorded in AI_USAGE.md after review.
 
+## D17 - Database constraints and numeric representation
+
+**Context:** The import, quiz, and attempt services will share stored data. Uniqueness or relationship checks implemented only in application code can fail under concurrent writes or omitted validation.
+
+**Decision:** Use Prisma 7.10.0 with the matching local SQLite adapter; avoid the Prisma 8 release candidate exposed by the registry's latest CLI tag. Model users/classes, teacher assignments, sessions, quizzes/questions/options, attempts/answers, and a seed initialization record. Stable usernames and quiz codes are unique; Arabic names remain display values. Require canonical lowercase usernames and exactly one class for a student, with no student-class field on other roles.
+
+Enforce one attempt per student/quiz through a unique constraint. Composite foreign keys ensure an answer's question belongs to the attempt's quiz and its option belongs to that question. Store question points and final grades as integer hundredths of a point, and penalties as integer basis points (100 basis points = 1%). This avoids floating-point storage ambiguity. Bound duration to 1–180 minutes, question positions to 1–200, points to 0.01–1,000 per question, and penalties to 0–100%. These are documented MVP limits, not requirements from the brief. Final scoring/rounding behavior will be implemented and tested with grading.
+
+**Trade-off:** Named SQL CHECK constraints supplement Prisma's schema for role values, ranges, time ordering, and complete final-result fields. Prisma schema syntax does not represent these checks: future table-rebuild migrations must preserve them, and integration tests must run the real migrations rather than `db push`. Full publication validation (including exactly four populated options), cross-record role authorization, immutable publication, and deadline/finalization enforcement remain service responsibilities; the current schema does not claim to enforce those complete workflows.
+
+**Verification:** Real SQLite integration tests cover migration repeat-safety, persistence, foreign keys, raw invalid roles, invalid class assignment, duplicate usernames, concurrent attempts on two connections, cross-question/cross-quiz answers, bounded fields, and transaction rollback. Results are recorded in AI_USAGE.md.
+
+## D18 - Persistent storage and migration startup
+
+**Decision and reason:** Mount SQLite in a named Docker volume, apply only committed migrations at startup, and start the web server only if migration succeeds. The current Prisma deployment command failed on a missing SQLite file in local verification; the initialization wrapper now creates the parent directory and opens the file in append mode, creating it without truncating existing data. Tests exercise that wrapper on a new file and again after inserting records.
+
+The server and migration CLI use the same normalized file path. Application connections explicitly enable foreign keys and WAL mode, with a bounded 5-second busy timeout; SQLite still permits only one writer. Keep a single shared Prisma client per web process and short transactions. The readiness endpoint queries a real application table and returns 503 when that fails.
+
+**Trade-off:** Keep Prisma CLI and `tsx` in the runtime image so migrations and forthcoming seed/import commands use the same code and dependencies. This is a larger image than a minimal Next.js standalone bundle, but avoids a separate migration service or custom migration engine. Retain a non-root runtime user and verify write permissions on the named volume. Prisma Client is generated from the schema during checks/builds and is not committed.
+
+**Verification:** The final Docker image passed lint, type checking, 15 SQLite integration tests, and the production build. Compose reached healthy status after migration; both HTTP smoke tests passed. A temporary database record survived a container restart and was then removed. A new file and repeated migration were separately covered by the integration suite.
+
+**Sources:** [Prisma 7 SQLite](https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/sqlite) and [Prisma configuration](https://www.prisma.io/docs/orm/v7/reference/prisma-config-reference). These document the adapter/configuration; first-file behavior was verified locally rather than inferred from the documentation.
+
+## D19 - Scoped fixes for transitive dependency advisories
+
+**Context:** Installing Prisma 7.10.0 introduced four high-severity npm audit entries through its pinned `deepmerge-ts` and `mysql2` dependencies. The suggested automatic force-fix would downgrade Prisma across a major version. This application uses SQLite, not MySQL; Prisma configuration is trusted repository code, not request input. That limits exposure but does not remove the vulnerable packages from the shipped image.
+
+**Decision:** Pin narrowly scoped npm overrides to `deepmerge-ts` 8.0.0 under `@prisma/config` 7.10.0 and `mysql2` 3.24.4 under Prisma 7.10.0. Review the former's major-version changes: map-merging and custom type changes do not apply to our plain Prisma configuration. Re-run real configuration loading, client generation, migrations, tests, production build, and npm audit with the overrides. Do not run `npm audit fix --force` or suppress the advisories.
+
+**Trade-off:** These overrides step outside Prisma's pinned dependency versions and must be revisited when Prisma updates. Local and container verification cover the SQLite paths we use; they do not certify unrelated Prisma/MySQL features. Remove the overrides once upstream supplies compatible patched dependencies.
+
+**Sources:** [Deepmerge advisory](https://github.com/advisories/GHSA-ggr8-5vv4-36mx), [version 8 changes](https://github.com/RebeccaStevens/deepmerge-ts/releases/tag/v8.0.0), [MySQL authentication advisory](https://github.com/advisories/GHSA-3f6p-5ww8-9rcr), and [MySQL compression advisory](https://github.com/advisories/GHSA-rgwj-5xj2-c3m3). Actual verification outcomes are recorded in AI_USAGE.md.
+
+## D20 - One-time demo initialization and public sample accounts
+
+**Context:** A reviewer needs meaningful data from `docker compose up --build`, including accounts for each role and report examples. Ordinary restarts must preserve actual work and the quiz window already shown to students.
+
+**Decision:** Run the demo initializer after migrations, within a single database transaction protected by a unique `SeedRun` marker. On later starts, return without rewriting records or reanchoring dates. If an unmarked database already has users, classes, quizzes, or attempts, fail with an explicit message rather than mix public demo identities into it. Provide the same repeat-safe `npm run db:seed` command for local development.
+
+Create three pilot classes with 20 students each, four teachers with explicit class memberships, and an administrator. Give each account a salted scrypt hash; publish only documented synthetic credentials for the assessment. Seed three complete 15-question quizzes, one draft, and six finished attempts for students 02 and 03 in each class. Leave student 01 untouched so the later login/attempt walkthrough starts fresh. Seeded sample results are arithmetic examples, including 7.75/18 for a partial math attempt with a 25% wrong-answer penalty; the actual grading service remains a separate implementation step.
+
+Set published windows from the first seed time (two hours before through 14 days after) so a newly created volume is immediately usable. Duration is 20 minutes, with the same per-question point variation and negative marking policy represented in the data. Existing volume restarts never move these dates. After 14 days, preserve historical results; a deliberate reset of the demo volume or a new quiz is needed for another fresh demonstration.
+
+**Trade-off:** Seed data adds startup work on the first run, mainly hashing 65 individual account passwords. Hashes are computed before the write transaction to keep its lock short. Public example passwords are appropriate only for this isolated assessment sample and would require replacement before real use. CLI seeding cannot resolve arbitrary existing records automatically; refusing that ambiguous case protects data.
+
+**Verification:** Tests use the real migration and SQLite adapter to check roster counts, credentials, role/class links, quiz windows, score examples, an unchanged repeat run, refusal/rollback on occupied unmarked storage, and the CLI command. Docker first-start and restart evidence is recorded in AI_USAGE.md.
+
+## D21 - Bounded CSV/XLSX operator imports
+
+**Context:** The brief requires loadable data; the applicant explicitly wanted both CSV and Excel in the core. The app does not yet have login or a browser upload flow, so granting upload access through a public route would bypass the planned role checks.
+
+**Decision:** Provide an operator CLI that requires local filesystem/container access. Commit equivalent UTF-8 CSV and `.xlsx` templates for teachers, students, and one quiz draft; the generation script keeps both formats aligned. `csv-parse` and `read-excel-file` only normalize cells into one table shape. Shared validation checks headers, types, row bounds, identifiers, passwords, class lists, quiz metadata, contiguous question positions, four distinct options, points, and penalties. The persistence layer then checks database references and teacher/class assignment, hashing account passwords before its transaction. Imports insert new records only and fail the whole transaction on conflicts. Imported quizzes remain drafts; they are never auto-published. This is separate from repeat-safe demo seeding.
+
+Require one XLSX sheet named `Import`. Inspect workbook archive parts before parsing to reject formulas, merged cells, macros, oversized expansion, and excessive ZIP entries. Limit input files to 2 MiB and 500 data rows; the quiz schema caps question positions at 200. Reject legacy `.xls`, arbitrary layouts, formulas, and browser upload for now. XLSX error rows count nonempty sheet rows because the selected reader omits blank rows; CSV errors use parser-reported physical lines. Document that distinction and show the offending column. The CLI never prints imported passwords.
+
+**Review correction:** A Claude review supplied by the applicant demonstrated that an Excel cell displayed as `25%` is read as numeric `0.25` and would silently become a 0.25% penalty. The selected reader does not expose the cell's number format through this import path. Require XLSX `penalty_percent` cells to be text, including values such as `25` for 25%; reject all numeric cells in that column with a row/column error. The committed template already uses text. CSV still accepts the plain value `25` and rejects a percent sign. This stricter XLSX rule also rejects an unformatted numeric `25`, but avoids an incorrect grading rule without adding a separate style parser.
+
+**Why / alternatives:** A fixed template and one validation path are easier to explain and test than a general column-mapping wizard. The current `ExcelJS` package would handle reading and writing together but brings a larger, older dependency chain with a moderate audit advisory. The smaller reader plus a development-only writer had zero reported advisories when checked. The extra archive preflight makes its cached-formula behavior explicit: precomputed formula results are still rejected as unsupported inputs.
+
+**Trade-off:** The CLI is privileged by machine/container access, not in-app administrator authentication; moving imports into the UI later must add role checks before reusing the parser/service. Input passwords exist in the operator's source file and should never be committed; real credential distribution and account recovery are deferred. Database uniqueness remains the final guard for concurrent imports. The bounded format favors predictable failure over attempting to understand arbitrary spreadsheets.
+
+**Verification:** Real-SQLite tests exercise equivalent CSV/XLSX templates, roles and teacher/class relationships, hashed passwords, stored draft questions, duplicate and unknown references, all-or-nothing rollback, quoted multiline CSV, malformed files, formula/wrong-sheet/oversized XLSX rejection, and the documented CLI. Actual local/container results are recorded in AI_USAGE.md.
+
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
@@ -201,7 +265,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap build/startup and HTTP smoke verification passed locally on Linux ARM64 through Docker Desktop. Applicant visual inspection, Claude review, and hosted CI execution remain pending. All business features and their tests remain unfinished, including persistent data, accounts, imports, quiz authoring, attempts, scoring, reports, and language switching. See [PLAN.md](PLAN.md) for the milestones and AI_USAGE.md for actual executed checks.
+Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, integration tests, demo data, and operator imports are implemented. Demo login, browser uploads, quiz authoring, active attempts, grading services, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 
