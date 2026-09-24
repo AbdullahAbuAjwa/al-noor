@@ -16,7 +16,9 @@ import { pickMessage } from "@/i18n/pick";
 import { requireRole } from "@/server/auth/current-user";
 import { getDatabase } from "@/server/db";
 import { getTeacherQuiz, listTaughtClasses } from "@/server/quizzes/drafts";
+import { suggestedWindow } from "@/server/quizzes/publish";
 import { listQuizQuestions } from "@/server/quizzes/questions";
+import { toZonedInput } from "@/server/time/zone";
 
 export default async function TeacherQuizPage({
   params,
@@ -43,6 +45,11 @@ export default async function TeacherQuizPage({
   // Ownership was confirmed above; the owner may see the correct answers.
   const questions = await listQuizQuestions(db, quiz.id);
   const questionsAction = `/api/teacher/quizzes/${encodeURIComponent(quiz.id)}/questions`;
+  const totalPoints = questions.reduce(
+    (sum, question) => sum + question.pointsHundredths,
+    0,
+  );
+  const suggested = suggestedWindow();
 
   return (
     <SiteShell locale={locale} currentPath={path} user={user}>
@@ -222,6 +229,58 @@ export default async function TeacherQuizPage({
                 idPrefix="new-question"
                 submitLabel={copy.questions.add}
               />
+            </section>
+          ) : null}
+          {isDraft ? (
+            <section className="card" id="publish" aria-labelledby="publish-title">
+              <h2 id="publish-title">{copy.publish.title}</h2>
+              <p className="muted">{copy.publish.intro}</p>
+              <p className="summary-line">
+                {copy.publish.summary(
+                  questions.length,
+                  formatHundredths(totalPoints),
+                )}
+              </p>
+              <form
+                action={`/api/teacher/quizzes/${encodeURIComponent(quiz.id)}/publish`}
+                method="post"
+                className="form"
+              >
+                <div className="field-row">
+                  <div className="field">
+                    <label htmlFor="opensAt">{copy.publish.opensAt}</label>
+                    <input
+                      id="opensAt"
+                      name="opensAt"
+                      type="datetime-local"
+                      dir="ltr"
+                      required
+                      defaultValue={toZonedInput(suggested.opensAt)}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="closesAt">{copy.publish.closesAt}</label>
+                    <input
+                      id="closesAt"
+                      name="closesAt"
+                      type="datetime-local"
+                      dir="ltr"
+                      required
+                      defaultValue={toZonedInput(suggested.closesAt)}
+                    />
+                  </div>
+                </div>
+                <p className="field-hint">{copy.publish.windowHint}</p>
+                <label className="choice choice--block">
+                  <input type="checkbox" name="confirm" value="yes" required />
+                  <span>{copy.publish.confirm}</span>
+                </label>
+                <div className="form-actions">
+                  <button type="submit" className="button button--primary">
+                    {copy.publish.submit}
+                  </button>
+                </div>
+              </form>
             </section>
           ) : null}
           <p className="back-link">

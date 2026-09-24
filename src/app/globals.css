@@ -631,6 +631,14 @@ fieldset.field legend {
   background: var(--surface);
 }
 .button--danger:hover { background: #fdf0ee; }
+.choice--block {
+  display: flex;
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding-block: 0.5rem;
+  font-weight: 400;
+}
+.summary-line { font-weight: 700; }
 .back-link { margin-block: 1.25rem 0; }
 .back-link a,
 .card p a {

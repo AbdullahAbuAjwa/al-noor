@@ -509,3 +509,156 @@ test("question endpoints enforce ownership and never change a published quiz", a
     await Promise.all([math, science, student].map(signOut));
   }
 });
+
+// datetime-local value on an Amman wall clock, as the publish form expects.
+function ammanInput(date) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Amman",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+test("publishing is limited to the owner's drafts", async () => {
+  const math = await signIn("teacher.math", "TeacherDemo2026!");
+  const science = await signIn("teacher.science", "TeacherDemo2026!");
+  const student = await signIn("student.10a.01", "StudentDemo2026!");
+  const endpoint = "/api/teacher/quizzes/demo-quiz-math-10a-demo/publish";
+  const fields = {
+    confirm: "yes",
+    opensAt: ammanInput(new Date()),
+    closesAt: ammanInput(new Date(Date.now() + 2 * 86_400_000)),
+  };
+  try {
+    assert.equal(
+      (await postForm(endpoint, fields, { cookie: student })).status,
+      403,
+    );
+    assert.equal(
+      (await postForm(endpoint, fields, { cookie: science })).status,
+      404,
+    );
+    const unconfirmed = await postForm(
+      endpoint,
+      { ...fields, confirm: "" },
+      { cookie: math },
+    );
+    assert.match(
+      unconfirmed.headers.get("location") ?? "",
+      /error=confirm#publish$/,
+    );
+    const locked = await postForm(endpoint, fields, { cookie: math });
+    assert.match(locked.headers.get("location") ?? "", /error=locked#publish$/);
+  } finally {
+    await Promise.all([math, science, student].map(signOut));
+  }
+});
+
+test(
+  "a published quiz reaches students of its class",
+  { skip: !allowWrites },
+  async () => {
+    const science = await signIn("teacher.science", "TeacherDemo2026!");
+    const student = await signIn("student.11a.01", "StudentDemo2026!");
+    const title = "Smoke published quiz";
+    try {
+      const created = await postForm(
+        "/api/teacher/quizzes",
+        {
+          title,
+          classId: "demo-class-11a",
+          durationMinutes: "20",
+          penaltyPercent: "0",
+        },
+        { cookie: science },
+      );
+      const quizId = (created.headers.get("location") ?? "")
+        .split("?")[0]
+        .split("/")
+        .pop();
+      const editor = `/teacher/quizzes/${quizId}`;
+      const before = await (
+        await request("/student", { headers: { cookie: student } })
+      ).text();
+      assert.ok(
+        !before.includes(title),
+        "a draft must stay hidden from students",
+      );
+
+      const window = {
+        confirm: "yes",
+        opensAt: ammanInput(new Date(Date.now() - 3_600_000)),
+        closesAt: ammanInput(new Date(Date.now() + 2 * 86_400_000)),
+      };
+      const empty = await postForm(
+        `/api/teacher/quizzes/${quizId}/publish`,
+        window,
+        {
+          cookie: science,
+        },
+      );
+      assert.equal(
+        empty.headers.get("location"),
+        `${editor}?error=noQuestions#publish`,
+      );
+
+      await postForm(
+        `/api/teacher/quizzes/${quizId}/questions`,
+        {
+          text: "What is H2O?",
+          points: "2",
+          option1: "Salt",
+          option2: "Water",
+          option3: "Oxygen",
+          option4: "Hydrogen",
+          correctOption: "2",
+        },
+        { cookie: science },
+      );
+      const published = await postForm(
+        `/api/teacher/quizzes/${quizId}/publish`,
+        window,
+        {
+          cookie: science,
+        },
+      );
+      assert.equal(
+        published.headers.get("location"),
+        `${editor}?notice=published`,
+      );
+
+      const after = await (
+        await request("/student", { headers: { cookie: student } })
+      ).text();
+      assert.ok(after.includes(title), "the class sees the published quiz");
+      const other = await signIn("student.10a.01", "StudentDemo2026!");
+      const otherClass = await (
+        await request("/student", { headers: { cookie: other } })
+      ).text();
+      await signOut(other);
+      assert.ok(!otherClass.includes(title), "other classes do not");
+      const settings = await postForm(
+        `/api/teacher/quizzes/${quizId}/settings`,
+        {
+          title: "Changed",
+          classId: "demo-class-11a",
+          durationMinutes: "20",
+          penaltyPercent: "0",
+        },
+        { cookie: science },
+      );
+      assert.equal(settings.headers.get("location"), `${editor}?error=locked`);
+    } finally {
+      await Promise.all([science, student].map(signOut));
+    }
+  },
+);

@@ -122,6 +122,8 @@ const ar = {
       questionAdded: "تمت إضافة السؤال.",
       questionSaved: "تم حفظ السؤال.",
       questionDeleted: "تم حذف السؤال.",
+      published:
+        "تم نشر الاختبار. سيظهر لطلاب الصفوف المحددة خلال فترة الإتاحة.",
     },
     errors: {
       title: "يُرجى كتابة عنوان من 1 إلى 120 حرفًا.",
@@ -136,6 +138,16 @@ const ar = {
         "يُرجى كتابة أربعة خيارات مختلفة وغير فارغة، حتى 200 حرف لكل خيار.",
       questionCorrect: "يُرجى اختيار الإجابة الصحيحة.",
       questionLimit: "وصل الاختبار إلى الحد الأقصى وهو 200 سؤال.",
+      confirm: "يُرجى تأكيد أن الاختبار لن يكون قابلًا للتعديل بعد النشر.",
+      windowFormat: "يُرجى إدخال تاريخ ووقت صحيحين للبداية والنهاية.",
+      windowOrder: "يجب أن يكون وقت الانتهاء بعد وقت البدء.",
+      windowPast: "وقت الانتهاء المحدد مضى بالفعل.",
+      windowShort: "يجب ألا تقل فترة الإتاحة عن مدة الاختبار.",
+      noQuestions: "يُرجى إضافة سؤال واحد على الأقل قبل النشر.",
+      incompleteQuestions:
+        "يوجد سؤال غير مكتمل. يحتاج كل سؤال إلى نص وعلامة وأربعة خيارات وإجابة صحيحة.",
+      publishClasses:
+        "أحد الصفوف المحددة لم يعد ضمن صفوف هذا الحساب. يُرجى تحديث الصفوف أولًا.",
     },
   },
   questions: {
@@ -156,6 +168,19 @@ const ar = {
     edit: "تعديل السؤال",
     save: "حفظ السؤال",
     delete: "حذف السؤال",
+  },
+  publish: {
+    title: "النشر",
+    intro:
+      "يُنشر الاختبار لطلاب الصفوف المحددة خلال فترة الإتاحة. بعد النشر تبقى الأسئلة والإعدادات ثابتة.",
+    summary: (questions: number, points: string) =>
+      `${questions} سؤال، والمجموع ${points} علامة.`,
+    opensAt: "يبدأ (بتوقيت عمّان)",
+    closesAt: "ينتهي (بتوقيت عمّان)",
+    windowHint:
+      "يحصل الطالب على مدة الاختبار كاملة ما لم يقترب وقت الانتهاء؛ لا تمتد أي محاولة بعده.",
+    confirm: "أؤكد أن الاختبار لن يكون قابلًا للتعديل بعد النشر.",
+    submit: "نشر الاختبار",
   },
   notFound: {
     title: "الصفحة غير موجودة",
@@ -290,6 +315,8 @@ const en: Dictionary = {
       questionAdded: "The question was added.",
       questionSaved: "The question was saved.",
       questionDeleted: "The question was deleted.",
+      published:
+        "The quiz was published. Students in its classes will see it during its availability window.",
     },
     errors: {
       title: "Enter a title of 1 to 120 characters.",
@@ -304,6 +331,17 @@ const en: Dictionary = {
         "Enter four different, non-empty options of up to 200 characters each.",
       questionCorrect: "Choose the correct answer.",
       questionLimit: "This quiz has reached the maximum of 200 questions.",
+      confirm: "Confirm that the quiz cannot be edited after it is published.",
+      windowFormat: "Enter a valid opening and closing date and time.",
+      windowOrder: "The closing time must be after the opening time.",
+      windowPast: "The chosen closing time has already passed.",
+      windowShort:
+        "The availability window must be at least as long as the quiz duration.",
+      noQuestions: "Add at least one question before publishing.",
+      incompleteQuestions:
+        "A question is incomplete. Each question needs text, points, four options, and a correct answer.",
+      publishClasses:
+        "One of the chosen classes is no longer assigned to this account. Update the classes first.",
     },
   },
   questions: {
@@ -326,6 +364,19 @@ const en: Dictionary = {
     edit: "Edit question",
     save: "Save question",
     delete: "Delete question",
+  },
+  publish: {
+    title: "Publish",
+    intro:
+      "The quiz is published to students in its classes for the availability window. After publishing, its questions and settings stay fixed.",
+    summary: (questions: number, points: string) =>
+      `${questions} questions, ${points} points in total.`,
+    opensAt: "Opens (Amman time)",
+    closesAt: "Closes (Amman time)",
+    windowHint:
+      "Students get the full duration unless the closing time is near; no attempt runs past it.",
+    confirm: "I understand the quiz cannot be edited after it is published.",
+    submit: "Publish quiz",
   },
   notFound: {
     title: "Page not found",

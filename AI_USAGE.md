@@ -217,6 +217,18 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** `npm run check` passed; `npx vitest run` passed 99 tests (23 new for questions). The Docker image rebuilt with lint/type checks, the same 99 tests, and the production build, and the container became healthy. Against the applicant's running container, 9 HTTP smoke tests passed and the write test was skipped by design; on a throwaway Compose project with `SMOKE_WRITES=1`, all 10 passed, including adding, editing, and deleting a question, and that project and its volume were removed. The pages were not checked in a browser here.
 
+### Session 18 - Quiz authoring, part 3: publication
+
+**Direction:** After committing part 2 (`8a17a99`), the applicant asked for the publication step.
+
+**Work performed:** An Amman wall-clock/UTC conversion based on the runtime's time-zone data, publication parsing (explicit confirmation, window order, already-closed windows), a publication service that locks the draft, validates the stored content and classes, checks the window against the duration, and sets the window in one transaction, a publish endpoint, and a bilingual publish card with a suggested window. Decisions are added to D25.
+
+**Expected values:** Time-zone expectations were worked out by hand from Jordan's offsets (UTC+3 since late 2022; UTC+2 in winter 2021), which Node's bundled time-zone data (`2026b`) was checked to contain before the tests were written. Window and duration boundaries come from D05/D25.
+
+**Corrections from actual checks:** ESLint's React purity rule rejected reading the clock while rendering the page. The suggested-window calculation moved into the publication service, which now owns that server-time decision and has its own unit test.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 119 tests (20 new for publication). The Docker image rebuilt with lint/type checks, the same 119 tests, and the production build, and the container became healthy. Against the applicant's running container, 10 HTTP smoke tests passed and the 2 write tests were skipped by design; on a throwaway Compose project with `SMOKE_WRITES=1`, all 12 passed, including a draft that stays hidden, is refused while empty, is published after a question is added, appears only for its class, and then refuses edits. That project and its volume were removed. The pages were not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:
