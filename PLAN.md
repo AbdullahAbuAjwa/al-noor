@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: bootstrap was merged into `main` in `a2550d8`; the applicant reported its Claude review complete. The database foundation was committed as `566f53e` on `feat/data-imports`. The second part adds repeat-safe demo data and has passed local/container checks; it awaits the applicant's next commit. CSV/XLSX imports remain pending.
+Current progress: bootstrap was merged into `main` in `a2550d8`; the applicant reported its Claude review complete. The database foundation (`566f53e`) and repeat-safe demo data (`0695dbe`) are committed on `feat/data-imports`. CSV/XLSX operator imports are implemented and verified locally as the third part, ready for the applicant's review and commit.
 
 ## Objective and source
 
@@ -26,7 +26,7 @@ The client's scenario is fictional. Product behavior beyond the brief is recorde
 - [ ] Answer autosave, visible save status, bounded connection recovery, and repeat-safe submission.
 - [ ] Server-side weighted grading with configurable negative marking and a final score floor of zero.
 - [ ] Student results, teacher results for owned quizzes, and center-wide administrator reports.
-- [ ] CSV and XLSX templates and an authorized, documented import command for teachers, students, and quiz data.
+- [x] CSV and XLSX templates and an authorized, documented import command for teachers, students, and quiz data.
 - [ ] Risk-based automated tests, fresh-start verification, and accurate documentation.
 
 ### Enhancements after the core passes

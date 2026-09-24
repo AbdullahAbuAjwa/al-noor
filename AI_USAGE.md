@@ -4,7 +4,7 @@ This is a factual work log, not a claim that every planned feature or verificati
 
 ## Tools actually used in this repository's work
 
-- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, application bootstrap, and database foundations.
+- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, application bootstrap, database foundations, demo data, and operator imports.
 - **Read-only supporting tools:** PDF text extraction and page rendering, inspection of the supplied email screenshots, official web documentation, and local directory/Git inspection.
 
 The applicant chose Claude Code for feature reviews and reported that the bootstrap review completed with no changes requested. Codex has not inspected that review transcript. No exact model identifier or percentage of AI-written code is asserted.
@@ -105,6 +105,16 @@ These are observed planning contributions. They do not imply the applicant has r
 **Work performed:** Added a transactional first-use initializer for 60 students, four teachers, one administrator, three published 15-question quizzes, one draft, and six synthetic finished attempts. Added reusable scrypt hashing/verification for the later login service, demo fixtures with varied points and one negative-marking example, a local seed command, automatic Docker startup seeding, and matching README credentials and decision D20.
 
 **Verification:** Local lint/type checks and all 19 SQLite tests passed, including four new seed tests. The original test command was accidentally split across shell environment scopes: `npm run check` used the bundled Node 24, while `npm test` initially picked system Node 18 and Prisma refused to start. Rerunning the test with Node 24 active passed. The final Docker image repeated lint/type checks, all 19 tests, and the production build. Compose initialized demo data before the server started and became healthy; its database held 65 users, three classes, four quizzes, and six finished attempts. After a container restart, the seed timestamp, quiz closing timestamp, and record counts were unchanged, and startup reported that existing records were preserved. Both HTTP smoke tests passed. No UI, login, hosted CI, or CSV/XLSX behavior is claimed.
+
+### Session 06 - CSV/XLSX operator imports (third part of milestone 3)
+
+**Task given to AI:** Implement the next step after the applicant committed the demo-data slice as `0695dbe` on `feat/data-imports`.
+
+**Work performed:** Added equivalent teachers/students/quiz templates in both formats, a reproducible template generator, a CLI importer, shared validation, role/class checks, and transactional persistence. Imported quizzes are drafts. Account passwords are hashed before writing. The reader bounds files and workbook expansion and rejects formula, macro, and merged-cell XLSX content. Updated the Docker runtime to include templates and documented the command and input contract in README and D21.
+
+**Tool and correction notes:** Checked current package metadata and official CSV/XLSX documentation. A trial dependency audit found a moderate transitive advisory in the larger `ExcelJS` option; the selected smaller reader, development-only writer, parser, and ZIP helper had zero reported advisories during installation. The first local lint pass caught an unused test import, which was removed. Tests exposed no database rollback failure. An additional review found that the XLSX reader trims strings by default, which could silently change an imported password; the parser now asks it to preserve raw strings before validation.
+
+**Verification actually performed:** After the string-preservation and XML-decoding adjustments, local lint/type checks, all 29 tests (10 for imports), and the production build passed. The final Docker build repeated lint/type checking, all 29 tests, and the production build; Compose reached healthy status. In a disposable container with an isolated temporary SQLite database, migrations and seed ran, then the documented CLI imported one teacher from CSV, one student from XLSX, and three quiz questions into a draft from XLSX. Both HTTP smoke tests passed against the running container. A final npm audit reported zero vulnerabilities. The import tests cover equivalent CSV/XLSX writes, rollback, invalid references/quiz rows, quoted multiline CSV, malformed/unsupported workbook inputs, and the CLI. Hosted CI, browser UI, and Claude review of this change remain unverified. The assistant did not stage, commit, push, or change branches.
 
 ## Implementation workflow
 

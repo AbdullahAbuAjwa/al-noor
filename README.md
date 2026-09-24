@@ -2,7 +2,7 @@
 
 A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
-**Current status: database and demo data.** The application has a persistent SQLite schema, automatic first-use demo data, an Arabic welcome page, and a database readiness endpoint. Imports, login, and quiz workflows are not available yet.
+**Current status: database, demo data, and operator imports.** The application has persistent SQLite storage, automatic first-use demo data, CSV/XLSX command-line imports, an Arabic welcome page, and a database readiness endpoint. Login and interactive quiz workflows are not available yet.
 
 ## Planned experience
 
@@ -40,6 +40,37 @@ Other teachers are `teacher.science`, `teacher.english`, and `teacher.history`; 
 
 For an already migrated local database, `npm run db:seed` initializes the same sample data; rerunning it is safe. Seeding deliberately refuses a database that already contains unmarked user/class/quiz/attempt records instead of mixing a public demo roster with existing data. A fresh Compose volume needs no manual seed command.
 
+## Importing CSV or Excel data
+
+The repository includes matching [CSV and XLSX templates](templates) for `teachers`, `students`, and `quiz`. Choose **one format per import**; importing both copies of the same template correctly fails as a duplicate. The example files use new identifiers, so you can import `teachers`, then `students`, then `quiz` into a freshly seeded database. An imported quiz is a **draft** and cannot be attempted until a later authoring flow validates and publishes it.
+
+With Docker running, for example:
+
+```sh
+docker compose exec -T app node --import tsx scripts/import.ts teachers templates/teachers.csv
+docker compose exec -T app node --import tsx scripts/import.ts students templates/students.xlsx
+docker compose exec -T app node --import tsx scripts/import.ts quiz templates/quiz.xlsx
+```
+
+To import your own local file, copy it into the running container, then run the appropriate command:
+
+```sh
+docker compose cp /path/to/roster.xlsx app:/tmp/roster.xlsx
+docker compose exec -T app node --import tsx scripts/import.ts students /tmp/roster.xlsx
+```
+
+For local Node.js development, after migration and sample initialization, use `npm run db:import -- teachers templates/teachers.csv` (or `students`/`quiz` and either extension). This CLI requires access to the application container or database and is intended for the center operator; it is not a public upload endpoint. Keep real files containing passwords outside the repository. `npm run templates:generate` regenerates the six committed examples when developing with Node.js 24.
+
+The exact columns, in order, are:
+
+- `teachers`: `username,name,password,classes`
+- `students`: `username,name,password,class`
+- `quiz`: `quiz_code,quiz_title,teacher_username,classes,duration_minutes,penalty_percent,question_position,question_text,points,option_1,option_2,option_3,option_4,correct_option`
+
+Usernames use 3–64 lowercase ASCII letters/digits/dots/underscores/hyphens and start with a letter. Quiz codes are lowercase with letters/digits/hyphens. `classes` is a semicolon-separated list of **existing** class names; a student's `class` is one existing class. Passwords are 10–128 characters and are hashed before storage. A quiz file describes one quiz, with its code, title, teacher, classes, duration, and penalty repeated identically on each question row. The teacher must already belong to every assigned class. Question positions start at 1 and are consecutive; each question has four distinct nonempty options and one correct option number (1–4). `duration_minutes` is 1–180; `points` is 0.01–1000 and `penalty_percent` is 0–100, each with at most two decimal places. The imported draft has no availability window until publication.
+
+CSV must be UTF-8 (an optional BOM is accepted) and may use standard quoted cells and newlines. XLSX must contain exactly one worksheet named `Import`; use plain text/number cells. Formulas, macros, and merged cells are rejected. Legacy `.xls` is unsupported. Files are limited to 2 MiB and 500 data rows; workbook archives are additionally bounded before expansion, and a quiz has at most 200 questions. All file values are validated before writing; database references and conflicts are checked within one transaction. Duplicates, missing classes, invalid teacher assignments, and malformed values cause a row/column error and **no partial import**. The row reported for XLSX is its position among nonempty sheet rows.
+
 ## Local development (optional)
 
 Use Node.js 24 (`.nvmrc` records the tested patch version) and its bundled npm. Older Node.js versions are rejected during installation. With a compatible Node.js already active:
@@ -59,7 +90,7 @@ Local development defaults to `.data/al-noor.db`, which is ignored by Git and se
 
 Installed: Next.js 16.3.6, React 19.3.0, TypeScript 5.9.3, and ESLint 9.39.5, using Node.js 24.19.0 in Docker. Direct versions and `package-lock.json` are repository inputs to `npm ci`; the base image is pinned by its multi-platform digest. ESLint 9 produces an upstream support warning; it is temporarily retained because the current React/accessibility plugins do not support ESLint 10 (see decision D14).
 
-The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 runs real-database integration tests. Prisma 7 was chosen over the registry's Prisma 8 release candidate. Scoped transitive dependency overrides address the audit findings documented in decision D19. The runtime also includes Prisma CLI and `tsx` to run the same migration code locally and in the container. Zod, Tailwind CSS, and Playwright remain planned for later features.
+The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 runs real-database integration tests. Prisma 7 was chosen over the registry's Prisma 8 release candidate. Scoped transitive dependency overrides address the audit findings documented in decision D19. The runtime also includes Prisma CLI and `tsx` to run the same migration/import code locally and in the container. CSV uses `csv-parse`; XLSX uses `read-excel-file`, with `fflate` for archive limits and unsupported-cell checks. `write-excel-file` is a development-only template generator. Zod, Tailwind CSS, and Playwright remain planned for later features.
 
 ## Planned reviewer walkthrough
 
@@ -82,7 +113,7 @@ npm test
 npm run build
 ```
 
-The Docker build runs lint/type checks, the database integration suite, and the production build, so these checks also work without host Node.js. Database tests apply the committed migrations to isolated temporary files; they never use your configured application database. They cover duplicate/concurrent attempts, invalid relationships, numeric/status constraints, transaction rollback, repeat migration, and persistence after reconnecting. Seed tests cover the roster, demo credentials, sample scores, repeat runs, and refusing an occupied unmarked database. To verify the running container:
+The Docker build runs lint/type checks, the database integration suite, and the production build, so these checks also work without host Node.js. Database tests apply the committed migrations to isolated temporary files; they never use your configured application database. They cover duplicate/concurrent attempts, invalid relationships, numeric/status constraints, transaction rollback, repeat migration, and persistence after reconnecting. Seed tests cover the roster, demo credentials, sample scores, repeat runs, and refusing an occupied unmarked database. Import tests exercise both formats, real database writes/rollback, authorization of class assignments, malformed inputs, the documented CLI, and the committed templates. To verify the running container:
 
 ```sh
 docker compose up --build --detach --wait --wait-timeout 120
@@ -105,4 +136,4 @@ Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz uni
 
 ## Current limitations
 
-This is a database and sample-data foundation, not a completed assessment. Imports, authentication, interactive quiz behavior, reports, and language switching remain unimplemented. Foreign keys and checks protect stored relationships, but role authorization, complete quiz-publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The temporary welcome page has Arabic and English copy prepared, but currently renders Arabic only. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
+This is a data and import foundation, not a completed assessment. Authentication, browser uploads, interactive quiz behavior, reports, and language switching remain unimplemented. Foreign keys and checks protect stored relationships; CLI imports enforce teacher/class assignments and create drafts, while web authorization, publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The temporary welcome page has Arabic and English copy prepared, but currently renders Arabic only. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).

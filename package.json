@@ -15,15 +15,20 @@
     "test": "prisma generate && vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "node --import tsx scripts/migrate.ts",
-    "db:seed": "node --import tsx scripts/seed.ts"
+    "db:seed": "node --import tsx scripts/seed.ts",
+    "db:import": "node --import tsx scripts/import.ts",
+    "templates:generate": "node --import tsx scripts/generate-templates.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.10.0",
     "@prisma/client": "7.10.0",
+    "csv-parse": "7.0.2",
+    "fflate": "0.8.3",
     "next": "16.3.6",
     "prisma": "7.10.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "read-excel-file": "9.3.10",
     "server-only": "0.0.1",
     "tsx": "4.23.15"
   },
@@ -34,7 +39,8 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.6",
     "typescript": "5.9.3",
-    "vitest": "5.0.1"
+    "vitest": "5.0.1",
+    "write-excel-file": "4.1.1"
   },
   "overrides": {
     "@prisma/config@7.10.0": {

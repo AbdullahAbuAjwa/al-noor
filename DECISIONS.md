@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **Bootstrap and the database foundation are committed; first-use demo data has passed local and container checks. Imports and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **The database and demo-data commits are on `feat/data-imports`; CSV/XLSX imports are locally verified and ready for the applicant's commit. Login and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. This record distinguishes those from engineering assumptions. Accepted plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -232,6 +232,20 @@ Set published windows from the first seed time (two hours before through 14 days
 
 **Verification:** Tests use the real migration and SQLite adapter to check roster counts, credentials, role/class links, quiz windows, score examples, an unchanged repeat run, refusal/rollback on occupied unmarked storage, and the CLI command. Docker first-start and restart evidence is recorded in AI_USAGE.md.
 
+## D21 - Bounded CSV/XLSX operator imports
+
+**Context:** The brief requires loadable data; the applicant explicitly wanted both CSV and Excel in the core. The app does not yet have login or a browser upload flow, so granting upload access through a public route would bypass the planned role checks.
+
+**Decision:** Provide an operator CLI that requires local filesystem/container access. Commit equivalent UTF-8 CSV and `.xlsx` templates for teachers, students, and one quiz draft; the generation script keeps both formats aligned. `csv-parse` and `read-excel-file` only normalize cells into one table shape. Shared validation checks headers, types, row bounds, identifiers, passwords, class lists, quiz metadata, contiguous question positions, four distinct options, points, and penalties. The persistence layer then checks database references and teacher/class assignment, hashing account passwords before its transaction. Imports insert new records only and fail the whole transaction on conflicts. Imported quizzes remain drafts; they are never auto-published. This is separate from repeat-safe demo seeding.
+
+Require one XLSX sheet named `Import`. Inspect workbook archive parts before parsing to reject formulas, merged cells, macros, oversized expansion, and excessive ZIP entries. Limit input files to 2 MiB and 500 data rows; the quiz schema caps question positions at 200. Reject legacy `.xls`, arbitrary layouts, formulas, and browser upload for now. XLSX error rows count nonempty sheet rows because the selected reader omits blank rows; CSV errors use parser-reported physical lines. Document that distinction and show the offending column. The CLI never prints imported passwords.
+
+**Why / alternatives:** A fixed template and one validation path are easier to explain and test than a general column-mapping wizard. The current `ExcelJS` package would handle reading and writing together but brings a larger, older dependency chain with a moderate audit advisory. The smaller reader plus a development-only writer had zero reported advisories when checked. The extra archive preflight makes its cached-formula behavior explicit: precomputed formula results are still rejected as unsupported inputs.
+
+**Trade-off:** The CLI is privileged by machine/container access, not in-app administrator authentication; moving imports into the UI later must add role checks before reusing the parser/service. Input passwords exist in the operator's source file and should never be committed; real credential distribution and account recovery are deferred. Database uniqueness remains the final guard for concurrent imports. The bounded format favors predictable failure over attempting to understand arbitrary spreadsheets.
+
+**Verification:** Real-SQLite tests exercise equivalent CSV/XLSX templates, roles and teacher/class relationships, hashed passwords, stored draft questions, duplicate and unknown references, all-or-nothing rollback, quoted multiline CSV, malformed files, formula/wrong-sheet/oversized XLSX rejection, and the documented CLI. Actual local/container results are recorded in AI_USAGE.md.
+
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
@@ -249,7 +263,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, integration tests, and demo data are implemented and locally verified in Docker. Demo login, imports, quiz authoring, active attempts, grading services, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
+Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, integration tests, demo data, and operator imports are implemented. Demo login, browser uploads, quiz authoring, active attempts, grading services, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 

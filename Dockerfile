@@ -14,6 +14,7 @@ COPY package.json package-lock.json tsconfig.json next-env.d.ts next.config.ts e
 COPY prisma.config.ts vitest.config.mts ./
 COPY prisma ./prisma
 COPY scripts ./scripts
+COPY templates ./templates
 COPY tests ./tests
 COPY src ./src
 COPY public ./public
@@ -37,6 +38,7 @@ COPY --from=build --chown=node:node /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build --chown=node:node /app/src/server ./src/server
 COPY --from=build --chown=node:node /app/src/generated ./src/generated
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/templates ./templates
 USER node
 EXPOSE 3000
 CMD ["sh", "scripts/docker-entrypoint.sh"]
