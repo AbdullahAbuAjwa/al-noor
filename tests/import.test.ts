@@ -198,6 +198,40 @@ describe("CSV/XLSX imports against real SQLite", () => {
     expect(await db.quiz.count()).toBe(4);
   }, 30_000);
 
+  it("rejects numeric XLSX penalty cells that could represent formatted percentages", async () => {
+    await importFromFile(db, "teachers", resolve("templates/teachers.csv"));
+    const path = join(directory, "formatted-percent.xlsx");
+    const rows = [
+      [...importHeaders.quiz],
+      ...templateExamples.quiz.map((row) =>
+        row.map((value, column) =>
+          column === 5 ? { value: 0.25, format: "0%" } : value,
+        ),
+      ),
+    ];
+    await writeExcelFile(rows, { sheet: "Import" }).toFile(path);
+    await expect(importFromFile(db, "quiz", path)).rejects.toThrow(
+      "Row 2, column penalty_percent: Enter the percent as text",
+    );
+    expect(await db.quiz.count()).toBe(4);
+
+    const plainNumber = join(directory, "plain-number.xlsx");
+    await writeExcelFile(
+      [
+        [...importHeaders.quiz],
+        ...templateExamples.quiz.map((row, index) =>
+          row.map((value, column) =>
+            index === 0 && column === 5 ? 25 : value,
+          ),
+        ),
+      ],
+      { sheet: "Import" },
+    ).toFile(plainNumber);
+    await expect(readImportFile(plainNumber, "quiz")).rejects.toThrow(
+      "Row 2, column penalty_percent",
+    );
+  }, 30_000);
+
   it("treats a quoted multiline CSV field as one record and reports its physical line", async () => {
     const path = csv("quoted.csv", [
       importHeaders.students.join(","),

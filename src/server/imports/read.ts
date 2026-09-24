@@ -142,9 +142,24 @@ export async function readImportFile(
 
   const rows: ImportRow[] = [];
   for (const raw of rawRows.slice(1)) {
-    const cells = raw.cells.map((value, index) =>
-      cellText(value, raw.row, expected[index] ?? `column ${index + 1}`),
-    );
+    const cells = raw.cells.map((value, index) => {
+      const column = expected[index] ?? `column ${index + 1}`;
+      // Excel stores 25% as numeric 0.25. Without cell-format information,
+      // accepting numeric percentages would silently change the grading rule.
+      if (
+        extension === ".xlsx" &&
+        kind === "quiz" &&
+        column === "penalty_percent" &&
+        typeof value === "number"
+      ) {
+        throw new ImportError(
+          "Enter the percent as text, for example 25 for 25%, without percentage formatting.",
+          raw.row,
+          column,
+        );
+      }
+      return cellText(value, raw.row, column);
+    });
     while (cells.at(-1)?.trim() === "") cells.pop();
     if (cells.every((value) => value.trim() === "")) continue;
     if (cells.length > expected.length) {
