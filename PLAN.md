@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestones 1–4 are merged into `main` (latest merge `0edef22`, bilingual UI foundation). Milestone 5 (authentication and role-based access) is implemented by Claude Code on `feat/auth-role-access`; local checks, the Docker build, and HTTP smoke checks passed, and the applicant's review, commit, and visual checks remain. Quiz authoring, attempts, grading, and reports remain pending.
+Current progress: milestones 1–5 are merged into `main` (latest `d176e91`, authentication and role-based access). Milestone 6 (quiz authoring) is in progress on `feat/quiz-authoring`: a sign-in language fix, then part 1 (draft settings). Attempts, grading, and reports remain pending.
 
 ## Objective and source
 
@@ -102,6 +102,12 @@ Milestone 5 uses `feat/auth-role-access`. It is the first milestone implemented 
 3. `feat: add bilingual sign-in and role home pages` — login and role pages, account bar, language return path, smoke checks, and documentation.
 
 This milestone's code was written before it was split (AI_USAGE Session 14). From milestone 6 on, each part is implemented and handed off only after the previous part is committed.
+
+Milestone 6 uses `feat/quiz-authoring`, after a review fix (`fix: keep sign-in page state when switching language`):
+
+1. `feat: let teachers create and edit quiz drafts` — draft settings, class ownership, owner/draft-only edits, pages, and tests.
+2. `feat: add question editing to quiz drafts` — questions with four options and one correct answer, draft-only and owner-only.
+3. `feat: publish validated quizzes with an availability window` — full validation, Amman-time window, lock after publication, and student visibility.
 
 Use one short-lived branch at a time, starting from the updated `main` after the previous feature is merged. Keep coherent intermediate commits; a feature branch need not contain only one commit. The first implementation branch is `chore/bootstrap` for milestone 2 only.
 

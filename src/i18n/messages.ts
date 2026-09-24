@@ -27,8 +27,7 @@ const ar = {
   },
   login: {
     title: "تسجيل الدخول",
-    intro:
-      "يُرجى إدخال اسم المستخدم وكلمة المرور المقدَّمَين من المركز.",
+    intro: "يُرجى إدخال اسم المستخدم وكلمة المرور المقدَّمَين من المركز.",
     username: "اسم المستخدم",
     password: "كلمة المرور",
     submit: "دخول",
@@ -94,6 +93,45 @@ const ar = {
     byClass: "الطلاب حسب الصف",
     className: "الصف",
     studentCount: "عدد الطلاب",
+  },
+  authoring: {
+    newQuiz: "اختبار جديد",
+    newTitle: "إنشاء مسودة اختبار",
+    newIntro:
+      "تبدأ المسودة بالإعدادات الأساسية، وتبقى مخفية عن الطلاب حتى النشر.",
+    draftEyebrow: "مسودة اختبار",
+    publishedEyebrow: "اختبار منشور",
+    settingsTitle: "إعدادات الاختبار",
+    title: "عنوان الاختبار",
+    classes: "الصفوف",
+    classesHint: "تظهر هنا صفوف هذا الحساب فقط.",
+    duration: "المدة بالدقائق",
+    durationHint: "من 1 إلى 180 دقيقة.",
+    penalty: "خصم الإجابة الخاطئة (%)",
+    penaltyHint:
+      "نسبة من علامة السؤال تُخصم عند الإجابة الخاطئة، من 0 إلى 100. القيمة 0 تعني عدم الخصم.",
+    create: "إنشاء المسودة",
+    save: "حفظ الإعدادات",
+    back: "العودة إلى اختباراتي",
+    noClasses: "لا توجد صفوف مرتبطة بهذا الحساب، لذلك لا يمكن إنشاء اختبار.",
+    lockedNote:
+      "الاختبار المنشور ثابت حتى لا تتغيّر شروطه على الطلاب. لاختبار معدّل يُنشأ اختبار جديد.",
+    notices: {
+      created: "تم إنشاء المسودة.",
+      saved: "تم حفظ الإعدادات.",
+    },
+    errors: {
+      title: "يُرجى كتابة عنوان من 1 إلى 120 حرفًا.",
+      classes: "يُرجى اختيار صف واحد على الأقل من صفوف هذا الحساب.",
+      duration: "يُرجى إدخال مدة من 1 إلى 180 دقيقة.",
+      penalty: "يُرجى إدخال نسبة خصم من 0 إلى 100 بمنزلتين عشريتين كحد أقصى.",
+      locked: "لا يمكن تعديل اختبار منشور.",
+    },
+  },
+  notFound: {
+    title: "الصفحة غير موجودة",
+    body: "قد يكون الرابط غير صحيح، أو أن الصفحة ليست ضمن صلاحيات هذا الحساب.",
+    back: "العودة إلى الصفحة الرئيسية",
   },
 };
 
@@ -194,6 +232,45 @@ const en: Dictionary = {
     byClass: "Students by class",
     className: "Class",
     studentCount: "Students",
+  },
+  authoring: {
+    newQuiz: "New quiz",
+    newTitle: "Create a quiz draft",
+    newIntro:
+      "A draft starts with its basic settings and stays hidden from students until it is published.",
+    draftEyebrow: "Quiz draft",
+    publishedEyebrow: "Published quiz",
+    settingsTitle: "Quiz settings",
+    title: "Quiz title",
+    classes: "Classes",
+    classesHint: "Only this account's classes are listed.",
+    duration: "Duration in minutes",
+    durationHint: "From 1 to 180 minutes.",
+    penalty: "Wrong-answer penalty (%)",
+    penaltyHint:
+      "Share of a question's points deducted for a wrong answer, from 0 to 100. Use 0 for no penalty.",
+    create: "Create draft",
+    save: "Save settings",
+    back: "Back to my quizzes",
+    noClasses: "This account has no classes, so it cannot create a quiz.",
+    lockedNote:
+      "A published quiz is fixed so its rules never change for students. Create a new quiz for a revised version.",
+    notices: {
+      created: "The draft was created.",
+      saved: "The settings were saved.",
+    },
+    errors: {
+      title: "Enter a title of 1 to 120 characters.",
+      classes: "Choose at least one of this account's classes.",
+      duration: "Enter a duration from 1 to 180 minutes.",
+      penalty: "Enter a penalty from 0 to 100 with at most two decimals.",
+      locked: "A published quiz cannot be edited.",
+    },
+  },
+  notFound: {
+    title: "Page not found",
+    body: "The link may be wrong, or the page is outside this account's access.",
+    back: "Back to the home page",
   },
 };
 

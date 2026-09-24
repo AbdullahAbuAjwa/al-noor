@@ -18,7 +18,12 @@ function postForm(path, fields, headers = {}) {
       "content-type": "application/x-www-form-urlencoded",
       ...headers,
     },
-    body: new URLSearchParams(fields).toString(),
+    // Arrays become repeated fields, as a browser sends checked checkboxes.
+    body: new URLSearchParams(
+      Object.entries(fields).flatMap(([name, value]) =>
+        [value].flat().map((item) => [name, item]),
+      ),
+    ).toString(),
     redirect: "manual",
   });
 }
@@ -261,3 +266,140 @@ test("each demo role reaches only its own area, and sign-out ends the session", 
     assert.equal(reused.status, 307, "a signed-out cookie must not work again");
   }
 });
+
+// Checks that create records run only when SMOKE_WRITES=1 (CI's throwaway
+// database), so a local run never adds test drafts to the demo data.
+const allowWrites = process.env.SMOKE_WRITES === "1";
+
+async function signIn(username, password) {
+  const login = await postForm("/api/auth/login", { username, password });
+  assert.equal(login.status, 303, `sign-in failed for ${username}`);
+  return sessionCookie(login);
+}
+
+async function signOut(cookie) {
+  await postForm("/api/auth/logout", {}, { cookie });
+}
+
+test("quiz authoring pages and form posts enforce ownership and draft-only edits", async () => {
+  const math = await signIn("teacher.math", "TeacherDemo2026!");
+  const science = await signIn("teacher.science", "TeacherDemo2026!");
+  const student = await signIn("student.10a.01", "StudentDemo2026!");
+  const published = "/teacher/quizzes/demo-quiz-math-10a-demo";
+  try {
+    const form = await request("/teacher/quizzes/new", {
+      headers: { cookie: math },
+    });
+    assert.equal(form.status, 200);
+    const html = await form.text();
+    // Only the teacher's own classes are offered.
+    assert.match(html, /value="demo-class-10a"/);
+    assert.match(html, /value="demo-class-10b"/);
+    assert.doesNotMatch(html, /value="demo-class-11a"/);
+
+    const own = await request(published, { headers: { cookie: math } });
+    assert.equal(own.status, 200);
+    assert.doesNotMatch(
+      await own.text(),
+      /\/settings"/,
+      "published quizzes have no edit form",
+    );
+    const other = await request(published, { headers: { cookie: science } });
+    assert.equal(other.status, 404, "another teacher's quiz must look missing");
+
+    const fields = {
+      title: "Smoke draft",
+      classId: "demo-class-10a",
+      durationMinutes: "20",
+      penaltyPercent: "0",
+    };
+    const asStudent = await postForm("/api/teacher/quizzes", fields, {
+      cookie: student,
+    });
+    assert.equal(asStudent.status, 403);
+    const signedOut = await postForm("/api/teacher/quizzes", fields);
+    assert.equal(signedOut.status, 303);
+    assert.equal(
+      signedOut.headers.get("location"),
+      "/login?next=%2Fteacher%2Fquizzes%2Fnew",
+    );
+    const foreign = await postForm(
+      `/api/teacher/quizzes/demo-quiz-math-10a-demo/settings`,
+      fields,
+      {
+        cookie: science,
+      },
+    );
+    assert.equal(foreign.status, 404);
+    const locked = await postForm(
+      `/api/teacher/quizzes/demo-quiz-math-10a-demo/settings`,
+      fields,
+      {
+        cookie: math,
+      },
+    );
+    assert.equal(locked.status, 303);
+    assert.equal(locked.headers.get("location"), `${published}?error=locked`);
+    const untaught = await postForm(
+      "/api/teacher/quizzes",
+      { ...fields, classId: "demo-class-11a" },
+      { cookie: math },
+    );
+    assert.equal(
+      untaught.headers.get("location"),
+      "/teacher/quizzes/new?error=classes",
+    );
+  } finally {
+    await Promise.all([math, science, student].map(signOut));
+  }
+});
+
+test(
+  "a teacher creates and edits a draft",
+  { skip: !allowWrites },
+  async () => {
+    const math = await signIn("teacher.math", "TeacherDemo2026!");
+    try {
+      const created = await postForm(
+        "/api/teacher/quizzes",
+        {
+          title: "Smoke draft",
+          classId: "demo-class-10b",
+          durationMinutes: "15",
+          penaltyPercent: "12.5",
+        },
+        { cookie: math },
+      );
+      assert.equal(created.status, 303);
+      const location = created.headers.get("location") ?? "";
+      assert.match(
+        location,
+        /^\/teacher\/quizzes\/[A-Za-z0-9_-]+\?notice=created$/,
+      );
+      const editor = location.split("?")[0];
+      const page = await (
+        await request(editor, { headers: { cookie: math } })
+      ).text();
+      assert.match(page, /Smoke draft/);
+      assert.match(page, /value="12.5"/);
+
+      const saved = await postForm(
+        `/api/teacher/quizzes/${editor.split("/").pop()}/settings`,
+        {
+          title: "Smoke draft (edited)",
+          classId: ["demo-class-10a", "demo-class-10b"],
+          durationMinutes: "30",
+          penaltyPercent: "0",
+        },
+        { cookie: math },
+      );
+      assert.equal(saved.headers.get("location"), `${editor}?notice=saved`);
+      const list = await (
+        await request("/teacher", { headers: { cookie: math } })
+      ).text();
+      assert.match(list, /Smoke draft \(edited\)/);
+    } finally {
+      await signOut(math);
+    }
+  },
+);

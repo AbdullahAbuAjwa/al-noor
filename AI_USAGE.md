@@ -195,6 +195,18 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed for fix 1:** `npm run check` passed; `npx vitest run` passed 49 tests; the Docker image rebuilt with lint/type checks, the same 49 tests, and the production build, and the container became healthy; `docker compose exec -T app node --test scripts/smoke.test.mjs` passed all 7 HTTP smoke tests. The switch was not checked in a browser here.
 
+### Session 16 - Quiz authoring, part 1: draft settings
+
+**Direction:** After committing the sign-in fix, the applicant asked Claude Code to start milestone 6 with part 1 only, to move quickly without lowering quality, and to write each part's tests at the end of that part. The second review item (capping concurrent password checks) was set aside for now and is recorded as a known gap in D23.
+
+**Work performed:** A draft service with server-side validation, class-ownership checks, generated quiz codes, and a conditional update that allows edits only by the owner and only while the quiz is a draft; form handlers with the same cross-site, session, and role guards as sign-in; bilingual pages to create a draft and to edit its settings (read-only once published); a bilingual not-found page; links from the teacher list. Decisions are in D25.
+
+**Expected values:** Tests take their expectations from the seed data (which teacher teaches which class, which quiz is published) and from the documented limits (1–180 minutes, 0–100% with two decimals), not from the implementation's output.
+
+**Corrections from actual checks:** TypeScript rejected a readonly empty array in a test helper; the helper's parameter type was widened. The smoke helper sent repeated form fields as one comma-joined value; it now sends them as separate fields, as a browser does for checked boxes.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 76 tests (27 new for drafts). The Docker image rebuilt with lint/type checks, the same 76 tests, and the production build, and the container became healthy. Against the applicant's running container, 8 HTTP smoke tests passed and the draft-creating test was skipped by design. On a separate throwaway Compose project (own volume, port 3002) with `SMOKE_WRITES=1`, all 9 passed, including creating and editing a draft; that project and its volume were then removed. The new pages were not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:

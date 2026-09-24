@@ -453,7 +453,7 @@ button { font: inherit; }
   gap: 0.35rem;
 }
 .field label { font-weight: 700; }
-.field input {
+.field input:not([type="checkbox"]) {
   min-block-size: 2.9rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid #b9cfc7;
@@ -478,6 +478,75 @@ button { font: inherit; }
   border: 1px solid #cde7df;
   color: var(--primary-dark);
   background: var(--primary-soft);
+}
+
+/* Teacher authoring */
+.container--narrow { inline-size: min(calc(100% - 2.5rem), 46rem); }
+.page-header__actions { margin-block-start: 1rem; }
+.card + .card { margin-block-start: 1rem; }
+.card .facts + .form { margin-block-start: 1.5rem; }
+.quiz-card__heading h2 a {
+  color: inherit;
+  text-decoration-color: rgb(15 118 110 / 35%);
+  text-underline-offset: 0.25em;
+}
+.quiz-card__heading h2 a:hover { color: var(--primary-dark); }
+fieldset.field {
+  min-inline-size: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+fieldset.field legend {
+  padding: 0;
+  font-weight: 700;
+}
+.field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+.choice-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.choice {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.85rem;
+  border: 1px solid #b9cfc7;
+  border-radius: 0.65rem;
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 700;
+}
+.choice:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.choice input {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  accent-color: var(--primary);
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.back-link { margin-block: 1.25rem 0; }
+.back-link a,
+.card p a {
+  color: var(--primary-dark);
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {
