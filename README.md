@@ -2,13 +2,13 @@
 
 A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
-**Current status: sign-in and role-based access.** The application has persistent SQLite storage, automatic first-use demo data, CSV/XLSX command-line imports, a responsive Arabic/English interface, and sign-in for students, teachers, and the centre administrator. Each role lands on its own page with data scoped to that account, teachers can create quiz drafts, edit their settings and questions, and publish them to their classes, and students can start and resume a timed attempt and save their answers. Submitting, taking a quiz, grading, and detailed reports are not available yet.
+**Status: core delivery complete.** Students sign in, take a timed multiple-choice quiz on a phone, and see their score; teachers create, edit, and publish quizzes for their own classes and see their students' results; the centre administrator sees results across the centre. The interface is Arabic by default with English, data persists in SQLite, sample data loads on first start, and CSV/XLSX imports load real rosters and quizzes. Known limitations are listed at the end.
 
 **Planning came first.** Before writing application code, Abdullah spent substantial time working through the complete client brief with **ChatGPT Codex**. He challenged assumptions and decided the scope, architecture, role boundaries, timing and grading behavior, import rules, edge cases, delivery order, and verification strategy. [PLAN.md](PLAN.md) and [DECISIONS.md](DECISIONS.md) were the starting point for implementation and continue to evolve as tests and reviews provide evidence. Deliberate planning before coding is part of how he approaches projects generally, especially when using AI tools.
 
 **AI-assisted engineering workflow:** Abdullah defines the scope and makes the technical decisions. Through the bilingual UI milestone he used **ChatGPT Codex** to help implement and reviewed each feature PR himself with **Claude Code** as a read-only review assistant. From the authentication milestone onward he directs **Claude Code** to implement the remaining features, while he still stages, commits, pushes, and merges every change and checks the interface himself. Claude Code's checks of its own code are not an independent review. Tests are added with each feature, and GitHub Actions is configured to run the production build and checks on PRs. [AI_USAGE.md](AI_USAGE.md) records what was actually done and verified.
 
-## Planned experience
+## What the application does
 
 - Students see quizzes assigned to their class, start or resume an attempt, and view their results.
 - Teachers author and publish quizzes for their assigned classes and review results for their quizzes.
@@ -106,16 +106,17 @@ Installed: Next.js 16.3.6, React 19.3.0, TypeScript 5.9.3, and ESLint 9.39.5, us
 
 The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 runs real-database integration tests. Prisma 7 was chosen over the registry's Prisma 8 release candidate. Scoped transitive dependency overrides address the audit findings documented in decision D19. The runtime also includes Prisma CLI and `tsx` to run the same migration/import code locally and in the container. CSV uses `csv-parse`; XLSX uses `read-excel-file`, with `fflate` for archive limits and unsupported-cell checks. `write-excel-file` is a development-only template generator. Zod, Tailwind CSS, and Playwright remain planned for later features.
 
-## Planned reviewer walkthrough
+## Reviewer walkthrough (about 10 minutes)
 
-1. Start a fresh checkout using the documented command.
-2. Sign in as a sample student and open an available quiz that has not been attempted.
-3. Answer questions, refresh, resume the same attempt, and submit.
-4. Sign in as the associated teacher to inspect the result and publish a new quiz for that class.
-5. Sign in as an administrator to inspect center-wide results.
-6. Try both interface languages and a phone-sized viewport.
+1. Run `docker compose up --build` and open http://localhost:3000.
+2. Sign in as `student.10a.01` / `StudentDemo2026!`, open the math quiz, read the rules, and **Start quiz**.
+3. Answer a few questions (each saves immediately), refresh the page or sign out and back in: the same attempt, answers, and deadline return. Then **Submit quiz** and read the score.
+4. Sign in as `teacher.math` / `TeacherDemo2026!`: the math quiz shows that result next to the seeded ones and the students who have not started. Create a **New quiz**, add questions, and **Publish** it for 10A or 10B.
+5. Sign in as that class's student again: the new quiz is listed with its window.
+6. Sign in as `admin` / `AdminDemo2026!` to see centre totals and every published quiz's results.
+7. Switch to English, and try a phone-width window.
 
-Today, step 1 and signing in for steps 2, 4, and 5 work; opening, answering, submitting, publishing, and detailed results arrive with the next milestones. Synthetic completed attempts are separate from each class's primary demo student.
+Things worth trying to break: a second **Start** or a second tab (still one attempt), answering after the deadline (refused), opening another teacher's quiz or another class's quiz by URL (404), a student posting to teacher endpoints (403), publishing an empty draft or a window shorter than the duration (refused), and wrong passwords (a one-minute cool-down after five). Students `02` and `03` of each class have seeded finished attempts; the other students have not started.
 
 ## Verification
 
@@ -152,4 +153,11 @@ Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz uni
 
 ## Current limitations
 
-This is not yet a completed assessment. Sign-in, sessions, role-scoped home pages, and quiz authoring with publication work; taking a timed quiz, autosave, grading, detailed teacher/administrator results, and browser uploads remain unimplemented. There is no password change or recovery; accounts come from the seed or the import command. Login throttling is per username and in memory (see DECISIONS D23 for its trade-offs). Foreign keys and checks protect stored relationships; CLI imports enforce teacher/class assignments and create drafts, while publication validation, deadline enforcement, and finalization rules still belong to the upcoming server services. The complete scope and deferred enhancements are tracked in [PLAN.md](PLAN.md).
+- **Connection recovery is in-page only.** Each answer is saved when chosen and a failed save shows **Try again**; answers chosen while offline are not queued in the browser, and two tabs editing the same attempt are not reconciled beyond "last save wins".
+- **Accounts:** no password change, recovery, or in-app account management; accounts come from the seed or the import command (an administrator form was an optional enhancement).
+- **Imports** run from the command line (`scripts/import.ts`); there is no browser upload, and results cannot be exported yet.
+- **Login throttling** is per username and in the server's memory; rotating usernames still reaches the password check (DECISIONS D23).
+- **Published quizzes are fixed** by design: no unpublishing, window changes, or question corrections after publication (D04).
+- **Verification limits:** automated tests and Docker smoke checks are recorded in [AI_USAGE.md](AI_USAGE.md); browser, phone, and screen-reader checks are the applicant's manual checks, and the app has not been tested behind an HTTPS proxy or with sustained concurrent load.
+
+Decisions, alternatives, and "if another week were available" are in [DECISIONS.md](DECISIONS.md).

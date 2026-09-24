@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **Bootstrap, data/imports, the bilingual UI foundation, and authentication with role-based access (D23) are merged into `main`; from milestone 5 Claude Code implements at the applicant's direction (D24). Quiz authoring is in progress on `feat/quiz-authoring`: teachers can create drafts, edit settings and questions, and publish with an availability window (D25). Students can start, resume, and answer a timed attempt (D26). On `feat/submission-and-results`, submission, server-side grading, and teacher/administrator results are implemented (D27).** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **All core milestones are merged: data and imports, bilingual UI, authentication and roles (D23), quiz authoring and publication (D25), timed attempts with server-saved answers (D26), and submission, grading, and results (D27). From milestone 5 Claude Code implemented at the applicant's direction (D24). Remaining gaps are listed under Unfinished work.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. Before coding, the applicant devoted substantial time to planning with ChatGPT Codex: reading the full brief, resolving ambiguity, comparing architecture and scope options, identifying misuse cases, and deciding how to test and deliver each part. He considers that planning the foundation of this project and his general engineering practice, especially with AI-assisted implementation. This record distinguishes requirements from assumptions and captures the resulting choices. Plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -359,8 +359,17 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Merged into `main`: bootstrap, data/imports, the bilingual UI foundation, and sign-in with role-scoped home pages. On `feat/quiz-authoring`, teachers can create drafts, edit their settings, add, edit, and delete questions, and publish a validated quiz with an Amman-time availability window; students can start and resume a timed attempt and save, change, or clear answers until the deadline. Submitting, taking a timed quiz, autosave, grading, detailed results/reports, and browser uploads remain unfinished, as does the password-check cap noted in D23. `main` protection, hosted CI results, and applicant visual checks of the newest pages have not been verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
+- Offline answer recovery (D08) is reduced to in-page saving with a retry button: no browser-side queue, automatic background retries, or cross-tab conflict messages.
+- No administrator form for accounts, no browser upload for CSV/XLSX (the command-line importer works), and no result export: the three optional enhancements in PLAN.md.
+- No password change or recovery; login throttling does not cap concurrent password checks across usernames (D23).
+- Published quizzes cannot be corrected or unpublished (D04).
+- Not verified here: GitHub branch protection, a hosted CI run, behavior behind an HTTPS proxy, load with many simultaneous students, and screen-reader use. Browser, phone, and visual checks were performed by the applicant, not by the AI tools.
 
 ## If another week were available
 
-Prioritize findings from reviewer/user testing, then finish administrator provisioning and browser imports if absent. Improve account recovery, accessibility and device coverage, and question correction/versioning. Measure realistic simultaneous quiz activity before changing the database or deployment model. Establish backup/restore and operating procedures before real center use.
+1. Answer recovery: queue unsaved choices in local storage per attempt, retry automatically with backoff while time remains, and use the attempt version to explain conflicts between tabs (the rest of D08).
+2. An administrator page to create students and teachers, and browser upload of CSV/XLSX files through the existing importer and its authorization rules.
+3. Result export (CSV/XLSX) and per-question statistics for teachers.
+4. Password change and reset handled by the centre, rate limiting at a trusted proxy, and a cap on concurrent password checks.
+5. End-to-end browser tests (Playwright) for the student and teacher journeys on phone and desktop widths, an accessibility audit, and a measured load test before choosing between SQLite and PostgreSQL.
+6. Backup/restore and operating procedures before real centre use.

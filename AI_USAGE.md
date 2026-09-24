@@ -259,6 +259,14 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** `npm run check` passed; `npx vitest run` passed 139 tests (6 new for grading and results). The Docker image rebuilt with lint/type checks, the same 139 tests, and the production build; against the applicant's container 13 HTTP smoke tests passed and 5 write tests were skipped by design. On a fresh throwaway Compose project with `SMOKE_WRITES=1`, all 18 passed, including submitting, seeing the result, a late save refused, and a repeated submission; that project and its volume were removed. The result pages were not checked in a browser here.
 
+### Session 22 - Clean-checkout verification and final documentation
+
+**Direction:** After the results PR was merged (`4ac9e8c`), the applicant asked for the last branch (`docs/final-verification`) within about fifteen minutes: verify a clean start and finalize the reviewer-facing documents.
+
+**Work performed:** README now opens with the delivered status, a ten-minute reviewer walkthrough with credentials and things worth trying to break, and a concrete list of limitations. DECISIONS has the final status, the unfinished work, and a prioritized "another week" list; PLAN marks the delivered core items.
+
+**Verification actually performed:** The committed `main` (`4ac9e8c`) was exported with `git archive` into an empty directory outside the repository, so only tracked files were present, and started with its own Compose project and a new volume. The image build ran lint/type checks, all 139 tests, and the production build; the container became healthy and logged "Demo data initialized." With `SMOKE_WRITES=1`, all 18 HTTP smoke tests passed (sign-in, roles, authoring, publishing, starting, answering, submitting, results). After `docker compose restart`, health returned ok, the log showed no pending migrations and "existing records preserved", and the database still held 7 submitted attempts (6 seeded plus the smoke test's) and one seed marker. The project and its volume were then removed. Not verified: a hosted CI run, other operating systems or CPU architectures than Docker Desktop on this Mac, and browser/phone behavior (the applicant's checks).
+
 ## Implementation workflow
 
 For each substantial feature, record:
