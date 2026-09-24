@@ -182,6 +182,40 @@ const ar = {
     confirm: "أؤكد أن الاختبار لن يكون قابلًا للتعديل بعد النشر.",
     submit: "نشر الاختبار",
   },
+  attempt: {
+    details: "التفاصيل",
+    start: "ابدأ الاختبار",
+    resume: "متابعة الاختبار",
+    beforeStart: "قبل البدء",
+    totalPoints: "مجموع العلامات",
+    oneAttempt: "لكل طالب محاولة واحدة فقط لهذا الاختبار.",
+    timerRule:
+      "يبدأ الوقت عند الضغط على «ابدأ الاختبار»، ولا يتوقف إذا أُغلقت الصفحة أو الجهاز.",
+    deadlineRule:
+      "ينتهي الوقت بانتهاء مدة الاختبار أو بإغلاق فترة الإتاحة، أيهما أسبق.",
+    scoringNoPenalty:
+      "لا خصم على الإجابة الخاطئة، والسؤال الذي لا يُجاب عنه لا يُحسب له شيء.",
+    scoringPenalty: (percent: string) =>
+      `تُخصم ${percent}% من علامة السؤال عند الإجابة الخاطئة، ولا يُخصم شيء عن السؤال الذي لا يُجاب عنه. المجموع النهائي لا يقل عن صفر.`,
+    availableNow: (minutes: number) =>
+      `الوقت المتاح عند البدء الآن: ${minutes} دقيقة.`,
+    shortened: (minutes: number) =>
+      `يُغلق الاختبار قريبًا، لذلك سيكون الوقت المتاح ${minutes} دقيقة فقط بدلًا من المدة الكاملة.`,
+    upcoming: "لم تبدأ فترة هذا الاختبار بعد.",
+    closed: "انتهت فترة هذا الاختبار.",
+    inProgress: "توجد محاولة جارية لهذا الاختبار، والوقت مستمر.",
+    finished: "تم تسليم هذا الاختبار.",
+    timeLeft: "الوقت المتبقي",
+    endsAt: (time: string) => `ينتهي الوقت: ${time} (بتوقيت عمّان)`,
+    timeOver: "انتهى وقت هذا الاختبار.",
+    questionOf: (position: number, total: number) =>
+      `السؤال ${position} من ${total}`,
+    back: "العودة إلى اختباراتي",
+    errors: {
+      upcoming: "لم تبدأ فترة هذا الاختبار بعد.",
+      closed: "انتهت فترة هذا الاختبار، ولا يمكن بدء محاولة جديدة.",
+    },
+  },
   notFound: {
     title: "الصفحة غير موجودة",
     body: "قد يكون الرابط غير صحيح، أو أن الصفحة ليست ضمن صلاحيات هذا الحساب.",
@@ -377,6 +411,40 @@ const en: Dictionary = {
       "Students get the full duration unless the closing time is near; no attempt runs past it.",
     confirm: "I understand the quiz cannot be edited after it is published.",
     submit: "Publish quiz",
+  },
+  attempt: {
+    details: "Details",
+    start: "Start quiz",
+    resume: "Continue quiz",
+    beforeStart: "Before you start",
+    totalPoints: "Total points",
+    oneAttempt: "Each student has one attempt at this quiz.",
+    timerRule:
+      "The timer starts when you press “Start quiz” and keeps running if the page or device is closed.",
+    deadlineRule:
+      "Time ends when the duration is used up or the quiz closes, whichever comes first.",
+    scoringNoPenalty:
+      "Wrong answers lose nothing, and unanswered questions score zero.",
+    scoringPenalty: (percent: string) =>
+      `A wrong answer loses ${percent}% of that question's points; an unanswered question loses nothing. The final score never goes below zero.`,
+    availableNow: (minutes: number) =>
+      `Time available if you start now: ${minutes} min.`,
+    shortened: (minutes: number) =>
+      `The quiz closes soon, so you will have only ${minutes} min instead of the full duration.`,
+    upcoming: "This quiz has not opened yet.",
+    closed: "This quiz has closed.",
+    inProgress: "You have an attempt in progress; the timer is running.",
+    finished: "This quiz has been submitted.",
+    timeLeft: "Time left",
+    endsAt: (time: string) => `Time ends: ${time} (Amman time)`,
+    timeOver: "Time is up for this quiz.",
+    questionOf: (position: number, total: number) =>
+      `Question ${position} of ${total}`,
+    back: "Back to my quizzes",
+    errors: {
+      upcoming: "This quiz has not opened yet.",
+      closed: "This quiz has closed, so a new attempt cannot start.",
+    },
   },
   notFound: {
     title: "Page not found",

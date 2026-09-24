@@ -662,3 +662,54 @@ test(
     }
   },
 );
+
+test("students reach only their class's quizzes and attempts", async () => {
+  const tenB = await signIn("student.10b.01", "StudentDemo2026!");
+  const tenA = await signIn("student.10a.01", "StudentDemo2026!");
+  const teacher = await signIn("teacher.math", "TeacherDemo2026!");
+  const quiz = "/student/quizzes/demo-quiz-math-10a-demo";
+  const start = "/api/student/quizzes/demo-quiz-math-10a-demo/start";
+  try {
+    const own = await request(quiz, { headers: { cookie: tenA } });
+    assert.equal(own.status, 200);
+    assert.match(await own.text(), /رياضيات الصف العاشر/);
+    assert.equal((await request(quiz, { headers: { cookie: tenB } })).status, 404);
+    assert.equal((await postForm(start, {}, { cookie: tenB })).status, 404);
+    assert.equal((await postForm(start, {}, { cookie: teacher })).status, 403);
+    const signedOut = await postForm(start, {});
+    assert.equal(signedOut.headers.get("location"), `/login?next=${encodeURIComponent(quiz)}`);
+    // No attempt of their own: the attempt page sends them to the quiz page.
+    const attempt = await request(`${quiz}/attempt`, {
+      headers: { cookie: tenB },
+      redirect: "manual",
+    });
+    assert.equal(attempt.status, 307);
+    assert.equal(attempt.headers.get("location"), quiz);
+  } finally {
+    await Promise.all([tenB, tenA, teacher].map(signOut));
+  }
+});
+
+test("starting twice resumes one timed attempt without answer keys", { skip: !allowWrites }, async () => {
+  const cookie = await signIn("student.10a.04", "StudentDemo2026!");
+  const quiz = "/student/quizzes/demo-quiz-math-10a-demo";
+  const start = "/api/student/quizzes/demo-quiz-math-10a-demo/start";
+  try {
+    const first = await postForm(start, {}, { cookie });
+    assert.equal(first.status, 303);
+    assert.equal(first.headers.get("location"), `${quiz}/attempt`);
+    const page = await (await request(`${quiz}/attempt`, { headers: { cookie } })).text();
+    assert.match(page, /role="timer"/);
+    assert.match(page, /id="q-15"/);
+    assert.doesNotMatch(page, /correctOption/);
+    const deadline = page.match(/ينتهي الوقت: ([^<]+)/)?.[1];
+    assert.ok(deadline, "the page shows the fixed deadline");
+
+    const second = await postForm(start, {}, { cookie });
+    assert.equal(second.headers.get("location"), `${quiz}/attempt`);
+    const again = await (await request(`${quiz}/attempt`, { headers: { cookie } })).text();
+    assert.equal(again.match(/ينتهي الوقت: ([^<]+)/)?.[1], deadline, "resuming keeps the deadline");
+  } finally {
+    await signOut(cookie);
+  }
+});

@@ -229,6 +229,16 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** `npm run check` passed; `npx vitest run` passed 119 tests (20 new for publication). The Docker image rebuilt with lint/type checks, the same 119 tests, and the production build, and the container became healthy. Against the applicant's running container, 10 HTTP smoke tests passed and the 2 write tests were skipped by design; on a throwaway Compose project with `SMOKE_WRITES=1`, all 12 passed, including a draft that stays hidden, is refused while empty, is published after a question is added, appears only for its class, and then refuses edits. That project and its volume were removed. The pages were not checked in a browser here.
 
+### Session 19 - Timed attempts, part 1: start and resume
+
+**Direction:** After the quiz-authoring PR was merged, the applicant asked for milestone 7 in two parts, to save time by running tests and Docker checks once at the end of each part, and started part 1.
+
+**Work performed:** An attempt service (class and publication eligibility, server-time window check, persisted deadline, idempotent start settled by the unique index, and an attempt view that never selects the correct option), a start endpoint, a quiz rules page with the time available now, an attempt page with a countdown based on the server's remaining time, links from the student list, and a role-generic form guard shared with the teacher endpoints. Decisions are in D26.
+
+**Expected values:** Deadlines, the late-start cap, and the 18-point total come from the seed (20-minute quizzes, 15 questions with every fifth worth 2 points) and D05, worked out by hand.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 127 tests (8 new for attempts, including two simultaneous starts on separate connections). The Docker image rebuilt with lint/type checks, the same 127 tests, and the production build; against the applicant's container 11 HTTP smoke tests passed and 3 write tests were skipped by design. On a throwaway Compose project with `SMOKE_WRITES=1`, all 14 passed, including starting twice without the deadline changing; that project and its volume were removed. The countdown and pages were not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:
