@@ -187,6 +187,48 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Not verified here:** Browser rendering, phone layout, keyboard use, screen-reader output, and contrast of the new pages (the applicant performs these checks); a hosted CI run; behavior behind a real HTTPS reverse proxy. No independent review of this code has occurred.
 
+### Session 15 - Review follow-up on the merged authentication milestone
+
+**Input:** After milestone 5 was merged, the applicant supplied two review findings and asked Claude Code to check them and fix what was needed on `feat/quiz-authoring`, one commit per fix, before quiz authoring starts. Claude Code confirmed both against the code: (1) the sign-in page passed only `/login` to the language switch, so switching language dropped `?error=` and `?next=`; (2) the login throttle is per username, so rotating usernames reaches the costly password check on every request.
+
+**Fix 1 (language switch on sign-in):** The page now rebuilds its own return path from recognized values (known error code, signed-out flag, safe `next`), and the error message is chosen from the same known list. A unit test covers accepted, unknown, unsafe, and repeated values; a new HTTP smoke test switches language on `/login?error=invalid&next=%2Fstudent` and checks the English error message and the preserved `next` field.
+
+**Verification actually performed for fix 1:** `npm run check` passed; `npx vitest run` passed 49 tests; the Docker image rebuilt with lint/type checks, the same 49 tests, and the production build, and the container became healthy; `docker compose exec -T app node --test scripts/smoke.test.mjs` passed all 7 HTTP smoke tests. The switch was not checked in a browser here.
+
+### Session 16 - Quiz authoring, part 1: draft settings
+
+**Direction:** After committing the sign-in fix, the applicant asked Claude Code to start milestone 6 with part 1 only, to move quickly without lowering quality, and to write each part's tests at the end of that part. The second review item (capping concurrent password checks) was set aside for now and is recorded as a known gap in D23.
+
+**Work performed:** A draft service with server-side validation, class-ownership checks, generated quiz codes, and a conditional update that allows edits only by the owner and only while the quiz is a draft; form handlers with the same cross-site, session, and role guards as sign-in; bilingual pages to create a draft and to edit its settings (read-only once published); a bilingual not-found page; links from the teacher list. Decisions are in D25.
+
+**Expected values:** Tests take their expectations from the seed data (which teacher teaches which class, which quiz is published) and from the documented limits (1–180 minutes, 0–100% with two decimals), not from the implementation's output.
+
+**Corrections from actual checks:** TypeScript rejected a readonly empty array in a test helper; the helper's parameter type was widened. The smoke helper sent repeated form fields as one comma-joined value; it now sends them as separate fields, as a browser does for checked boxes.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 76 tests (27 new for drafts). The Docker image rebuilt with lint/type checks, the same 76 tests, and the production build, and the container became healthy. Against the applicant's running container, 8 HTTP smoke tests passed and the draft-creating test was skipped by design. On a separate throwaway Compose project (own volume, port 3002) with `SMOKE_WRITES=1`, all 9 passed, including creating and editing a draft; that project and its volume were then removed. The new pages were not checked in a browser here.
+
+### Session 17 - Quiz authoring, part 2: question editing
+
+**Direction:** After committing part 1 (`ddf83dd`), the applicant asked for part 2 only.
+
+**Work performed:** A question service (validation with the importer's limits, owner-and-draft lock inside each transaction, add/update/delete with consecutive renumbering, 200-question limit), two form endpoints with the existing guards, a question form with a radio button per option, a question list on the draft page (read-only with correct answers marked on the teacher's own published quiz), and bilingual copy. D25 records the decisions.
+
+**Corrections from actual checks:** Two new tests first failed because they assumed the seeded history draft had three questions; the seed has two (a count that also matched a type-definition line had misled the estimate). The expectation was corrected from the seed file, not from the implementation's output. TypeScript also required narrowing the add endpoint's error handling before mapping reasons to message codes. Form-field ids on the edit forms were renamed so they cannot be confused with question anchors.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 99 tests (23 new for questions). The Docker image rebuilt with lint/type checks, the same 99 tests, and the production build, and the container became healthy. Against the applicant's running container, 9 HTTP smoke tests passed and the write test was skipped by design; on a throwaway Compose project with `SMOKE_WRITES=1`, all 10 passed, including adding, editing, and deleting a question, and that project and its volume were removed. The pages were not checked in a browser here.
+
+### Session 18 - Quiz authoring, part 3: publication
+
+**Direction:** After committing part 2 (`8a17a99`), the applicant asked for the publication step.
+
+**Work performed:** An Amman wall-clock/UTC conversion based on the runtime's time-zone data, publication parsing (explicit confirmation, window order, already-closed windows), a publication service that locks the draft, validates the stored content and classes, checks the window against the duration, and sets the window in one transaction, a publish endpoint, and a bilingual publish card with a suggested window. Decisions are added to D25.
+
+**Expected values:** Time-zone expectations were worked out by hand from Jordan's offsets (UTC+3 since late 2022; UTC+2 in winter 2021), which Node's bundled time-zone data (`2026b`) was checked to contain before the tests were written. Window and duration boundaries come from D05/D25.
+
+**Corrections from actual checks:** ESLint's React purity rule rejected reading the clock while rendering the page. The suggested-window calculation moved into the publication service, which now owns that server-time decision and has its own unit test.
+
+**Verification actually performed:** `npm run check` passed; `npx vitest run` passed 119 tests (20 new for publication). The Docker image rebuilt with lint/type checks, the same 119 tests, and the production build, and the container became healthy. Against the applicant's running container, 10 HTTP smoke tests passed and the 2 write tests were skipped by design; on a throwaway Compose project with `SMOKE_WRITES=1`, all 12 passed, including a draft that stays hidden, is refused while empty, is published after a question is added, appears only for its class, and then refuses edits. That project and its volume were removed. The pages were not checked in a browser here.
+
 ## Implementation workflow
 
 For each substantial feature, record:

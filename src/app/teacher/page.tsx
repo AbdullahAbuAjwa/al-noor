@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { SiteShell } from "@/components/site-shell";
 import {
@@ -23,6 +24,11 @@ export default async function TeacherHomePage() {
         <div className="container">
           <PageHeader eyebrow={copy.teacher.eyebrow} title={copy.teacher.title}>
             <p className="muted">{copy.teacher.intro}</p>
+            <p className="page-header__actions">
+              <Link className="button button--primary" href="/teacher/quizzes/new">
+                {copy.authoring.newQuiz}
+              </Link>
+            </p>
           </PageHeader>
           {quizzes.length === 0 ? (
             <p className="card empty-state">{copy.teacher.empty}</p>
@@ -31,7 +37,11 @@ export default async function TeacherHomePage() {
               {quizzes.map((quiz) => (
                 <li key={quiz.id} className="card quiz-card">
                   <div className="quiz-card__heading">
-                    <h2>{quiz.title}</h2>
+                    <h2>
+                      <Link href={`/teacher/quizzes/${quiz.id}`}>
+                        {quiz.title}
+                      </Link>
+                    </h2>
                     <span
                       className={`badge badge--${quiz.status === "PUBLISHED" ? "open" : "draft"}`}
                     >

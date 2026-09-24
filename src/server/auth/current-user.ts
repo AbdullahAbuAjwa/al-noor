@@ -11,11 +11,14 @@ import {
   type SessionUser,
 } from "./session";
 
-// Deduplicated per request so layouts and pages share one session lookup.
-export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+// Route handlers call this directly; pages use the per-request cached version.
+export async function readSessionUser(): Promise<SessionUser | null> {
   const token = (await cookies()).get(sessionCookieName)?.value;
   return findSessionUser(await getDatabase(), token, new Date());
-});
+}
+
+// Deduplicated per request so layouts and pages share one session lookup.
+export const getCurrentUser = cache(readSessionUser);
 
 // Every protected page calls this on the server; hidden links are not access
 // control. Other roles are sent to their own area instead of seeing this one.

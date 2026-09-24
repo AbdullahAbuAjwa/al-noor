@@ -27,3 +27,26 @@ export function postLoginPath(role: Role, requested: unknown): string {
   const pathname = path.split(/[?#]/, 1)[0];
   return pathname === home || pathname.startsWith(`${home}/`) ? path : home;
 }
+
+export const loginErrors = ["invalid", "throttled"] as const;
+export type LoginError = (typeof loginErrors)[number];
+
+export function isLoginError(value: unknown): value is LoginError {
+  return loginErrors.includes(value as LoginError);
+}
+
+// Rebuilds the sign-in URL from recognized values only, so switching language
+// keeps the message and requested page without echoing arbitrary input.
+export function loginPagePath(params: {
+  error?: unknown;
+  signedOut?: unknown;
+  next?: unknown;
+}): string {
+  const query = new URLSearchParams();
+  if (isLoginError(params.error)) query.set("error", params.error);
+  else if (params.signedOut === "1") query.set("signedOut", "1");
+  const next = safeLocalPath(params.next);
+  if (next) query.set("next", next);
+  const search = query.toString();
+  return search ? `/login?${search}` : "/login";
+}

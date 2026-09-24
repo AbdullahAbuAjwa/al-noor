@@ -3,7 +3,12 @@ import { SiteShell } from "@/components/site-shell";
 import { getLocale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { getCurrentUser } from "@/server/auth/current-user";
-import { homePathFor, safeLocalPath } from "@/server/auth/paths";
+import {
+  homePathFor,
+  isLoginError,
+  loginPagePath,
+  safeLocalPath,
+} from "@/server/auth/paths";
 
 export default async function LoginPage({
   searchParams,
@@ -17,15 +22,10 @@ export default async function LoginPage({
   const locale = await getLocale();
   const copy = messages[locale].login;
   const next = safeLocalPath(params.next);
-  const error =
-    params.error === "throttled"
-      ? copy.throttled
-      : params.error === "invalid"
-        ? copy.invalid
-        : null;
+  const error = isLoginError(params.error) ? copy[params.error] : null;
 
   return (
-    <SiteShell locale={locale} currentPath="/login">
+    <SiteShell locale={locale} currentPath={loginPagePath(params)}>
       <main id="main-content" className="page page--centered">
         <div className="container">
           <section className="card auth-card" aria-labelledby="login-title">
@@ -35,7 +35,7 @@ export default async function LoginPage({
               <p className="notice notice--error" role="alert">
                 {error}
               </p>
-            ) : params.signedOut ? (
+            ) : params.signedOut === "1" ? (
               <p className="notice notice--info" role="status">
                 {copy.signedOut}
               </p>

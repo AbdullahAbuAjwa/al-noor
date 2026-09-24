@@ -27,8 +27,7 @@ const ar = {
   },
   login: {
     title: "تسجيل الدخول",
-    intro:
-      "يُرجى إدخال اسم المستخدم وكلمة المرور المقدَّمَين من المركز.",
+    intro: "يُرجى إدخال اسم المستخدم وكلمة المرور المقدَّمَين من المركز.",
     username: "اسم المستخدم",
     password: "كلمة المرور",
     submit: "دخول",
@@ -94,6 +93,99 @@ const ar = {
     byClass: "الطلاب حسب الصف",
     className: "الصف",
     studentCount: "عدد الطلاب",
+  },
+  authoring: {
+    newQuiz: "اختبار جديد",
+    newTitle: "إنشاء مسودة اختبار",
+    newIntro:
+      "تبدأ المسودة بالإعدادات الأساسية، وتبقى مخفية عن الطلاب حتى النشر.",
+    draftEyebrow: "مسودة اختبار",
+    publishedEyebrow: "اختبار منشور",
+    settingsTitle: "إعدادات الاختبار",
+    title: "عنوان الاختبار",
+    classes: "الصفوف",
+    classesHint: "تظهر هنا صفوف هذا الحساب فقط.",
+    duration: "المدة بالدقائق",
+    durationHint: "من 1 إلى 180 دقيقة.",
+    penalty: "خصم الإجابة الخاطئة (%)",
+    penaltyHint:
+      "نسبة من علامة السؤال تُخصم عند الإجابة الخاطئة، من 0 إلى 100. القيمة 0 تعني عدم الخصم.",
+    create: "إنشاء المسودة",
+    save: "حفظ الإعدادات",
+    back: "العودة إلى اختباراتي",
+    noClasses: "لا توجد صفوف مرتبطة بهذا الحساب، لذلك لا يمكن إنشاء اختبار.",
+    lockedNote:
+      "الاختبار المنشور ثابت حتى لا تتغيّر شروطه على الطلاب. لاختبار معدّل يُنشأ اختبار جديد.",
+    notices: {
+      created: "تم إنشاء المسودة. يمكن الآن إضافة الأسئلة.",
+      saved: "تم حفظ الإعدادات.",
+      questionAdded: "تمت إضافة السؤال.",
+      questionSaved: "تم حفظ السؤال.",
+      questionDeleted: "تم حذف السؤال.",
+      published:
+        "تم نشر الاختبار. سيظهر لطلاب الصفوف المحددة خلال فترة الإتاحة.",
+    },
+    errors: {
+      title: "يُرجى كتابة عنوان من 1 إلى 120 حرفًا.",
+      classes: "يُرجى اختيار صف واحد على الأقل من صفوف هذا الحساب.",
+      duration: "يُرجى إدخال مدة من 1 إلى 180 دقيقة.",
+      penalty: "يُرجى إدخال نسبة خصم من 0 إلى 100 بمنزلتين عشريتين كحد أقصى.",
+      locked: "لا يمكن تعديل اختبار منشور.",
+      questionText: "يُرجى كتابة نص سؤال من 1 إلى 500 حرف.",
+      questionPoints:
+        "يُرجى إدخال علامة من 0.01 إلى 1000 بمنزلتين عشريتين كحد أقصى.",
+      questionOptions:
+        "يُرجى كتابة أربعة خيارات مختلفة وغير فارغة، حتى 200 حرف لكل خيار.",
+      questionCorrect: "يُرجى اختيار الإجابة الصحيحة.",
+      questionLimit: "وصل الاختبار إلى الحد الأقصى وهو 200 سؤال.",
+      confirm: "يُرجى تأكيد أن الاختبار لن يكون قابلًا للتعديل بعد النشر.",
+      windowFormat: "يُرجى إدخال تاريخ ووقت صحيحين للبداية والنهاية.",
+      windowOrder: "يجب أن يكون وقت الانتهاء بعد وقت البدء.",
+      windowPast: "وقت الانتهاء المحدد مضى بالفعل.",
+      windowShort: "يجب ألا تقل فترة الإتاحة عن مدة الاختبار.",
+      noQuestions: "يُرجى إضافة سؤال واحد على الأقل قبل النشر.",
+      incompleteQuestions:
+        "يوجد سؤال غير مكتمل. يحتاج كل سؤال إلى نص وعلامة وأربعة خيارات وإجابة صحيحة.",
+      publishClasses:
+        "أحد الصفوف المحددة لم يعد ضمن صفوف هذا الحساب. يُرجى تحديث الصفوف أولًا.",
+    },
+  },
+  questions: {
+    title: "الأسئلة",
+    empty: "لا توجد أسئلة بعد.",
+    number: (position: number) => `السؤال ${position}`,
+    add: "إضافة سؤال",
+    newTitle: "سؤال جديد",
+    text: "نص السؤال",
+    points: "العلامة",
+    pointsHint: "من 0.01 إلى 1000.",
+    pointsValue: (points: string) => `${points} علامة`,
+    options: "الخيارات",
+    optionsHint: "أربعة خيارات مختلفة. يُحدَّد الخيار الصحيح بالزر المجاور له.",
+    option: (position: number) => `الخيار ${position}`,
+    markCorrect: (position: number) => `الخيار ${position} هو الإجابة الصحيحة`,
+    correct: "الإجابة الصحيحة",
+    edit: "تعديل السؤال",
+    save: "حفظ السؤال",
+    delete: "حذف السؤال",
+  },
+  publish: {
+    title: "النشر",
+    intro:
+      "يُنشر الاختبار لطلاب الصفوف المحددة خلال فترة الإتاحة. بعد النشر تبقى الأسئلة والإعدادات ثابتة.",
+    summary: (questions: number, points: string) =>
+      `${questions} سؤال، والمجموع ${points} علامة.`,
+    opensAt: "يبدأ (بتوقيت عمّان)",
+    closesAt: "ينتهي (بتوقيت عمّان)",
+    windowHint:
+      "يحصل الطالب على مدة الاختبار كاملة ما لم يقترب وقت الانتهاء؛ لا تمتد أي محاولة بعده.",
+    confirm: "أؤكد أن الاختبار لن يكون قابلًا للتعديل بعد النشر.",
+    submit: "نشر الاختبار",
+  },
+  notFound: {
+    title: "الصفحة غير موجودة",
+    body: "قد يكون الرابط غير صحيح، أو أن الصفحة ليست ضمن صلاحيات هذا الحساب.",
+    back: "العودة إلى الصفحة الرئيسية",
   },
 };
 
@@ -194,6 +286,102 @@ const en: Dictionary = {
     byClass: "Students by class",
     className: "Class",
     studentCount: "Students",
+  },
+  authoring: {
+    newQuiz: "New quiz",
+    newTitle: "Create a quiz draft",
+    newIntro:
+      "A draft starts with its basic settings and stays hidden from students until it is published.",
+    draftEyebrow: "Quiz draft",
+    publishedEyebrow: "Published quiz",
+    settingsTitle: "Quiz settings",
+    title: "Quiz title",
+    classes: "Classes",
+    classesHint: "Only this account's classes are listed.",
+    duration: "Duration in minutes",
+    durationHint: "From 1 to 180 minutes.",
+    penalty: "Wrong-answer penalty (%)",
+    penaltyHint:
+      "Share of a question's points deducted for a wrong answer, from 0 to 100. Use 0 for no penalty.",
+    create: "Create draft",
+    save: "Save settings",
+    back: "Back to my quizzes",
+    noClasses: "This account has no classes, so it cannot create a quiz.",
+    lockedNote:
+      "A published quiz is fixed so its rules never change for students. Create a new quiz for a revised version.",
+    notices: {
+      created: "The draft was created. Add its questions below.",
+      saved: "The settings were saved.",
+      questionAdded: "The question was added.",
+      questionSaved: "The question was saved.",
+      questionDeleted: "The question was deleted.",
+      published:
+        "The quiz was published. Students in its classes will see it during its availability window.",
+    },
+    errors: {
+      title: "Enter a title of 1 to 120 characters.",
+      classes: "Choose at least one of this account's classes.",
+      duration: "Enter a duration from 1 to 180 minutes.",
+      penalty: "Enter a penalty from 0 to 100 with at most two decimals.",
+      locked: "A published quiz cannot be edited.",
+      questionText: "Enter question text of 1 to 500 characters.",
+      questionPoints:
+        "Enter points from 0.01 to 1000 with at most two decimals.",
+      questionOptions:
+        "Enter four different, non-empty options of up to 200 characters each.",
+      questionCorrect: "Choose the correct answer.",
+      questionLimit: "This quiz has reached the maximum of 200 questions.",
+      confirm: "Confirm that the quiz cannot be edited after it is published.",
+      windowFormat: "Enter a valid opening and closing date and time.",
+      windowOrder: "The closing time must be after the opening time.",
+      windowPast: "The chosen closing time has already passed.",
+      windowShort:
+        "The availability window must be at least as long as the quiz duration.",
+      noQuestions: "Add at least one question before publishing.",
+      incompleteQuestions:
+        "A question is incomplete. Each question needs text, points, four options, and a correct answer.",
+      publishClasses:
+        "One of the chosen classes is no longer assigned to this account. Update the classes first.",
+    },
+  },
+  questions: {
+    title: "Questions",
+    empty: "There are no questions yet.",
+    number: (position: number) => `Question ${position}`,
+    add: "Add question",
+    newTitle: "New question",
+    text: "Question text",
+    points: "Points",
+    pointsHint: "From 0.01 to 1000.",
+    pointsValue: (points: string) => `${points} pts`,
+    options: "Options",
+    optionsHint:
+      "Four different options. Mark the correct one with the button beside it.",
+    option: (position: number) => `Option ${position}`,
+    markCorrect: (position: number) =>
+      `Option ${position} is the correct answer`,
+    correct: "Correct answer",
+    edit: "Edit question",
+    save: "Save question",
+    delete: "Delete question",
+  },
+  publish: {
+    title: "Publish",
+    intro:
+      "The quiz is published to students in its classes for the availability window. After publishing, its questions and settings stay fixed.",
+    summary: (questions: number, points: string) =>
+      `${questions} questions, ${points} points in total.`,
+    opensAt: "Opens (Amman time)",
+    closesAt: "Closes (Amman time)",
+    windowHint:
+      "Students get the full duration unless the closing time is near; no attempt runs past it.",
+    confirm: "I understand the quiz cannot be edited after it is published.",
+    submit: "Publish quiz",
+  },
+  notFound: {
+    title: "Page not found",
+    body: "The link may be wrong, or the page is outside this account's access.",
+    back: "Back to the home page",
   },
 };
 
