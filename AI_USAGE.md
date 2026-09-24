@@ -4,10 +4,10 @@ This is a factual work log, not a claim that every planned feature or verificati
 
 ## Tools actually used in this repository's work
 
-- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, and application bootstrap.
+- **Codex desktop assistant:** requirements analysis, architecture discussion, test planning, documentation, application bootstrap, and database foundations.
 - **Read-only supporting tools:** PDF text extraction and page rendering, inspection of the supplied email screenshots, official web documentation, and local directory/Git inspection.
 
-The applicant chose Claude Code for subsequent feature reviews. **No Claude review of this repository has been observed or recorded yet.** No exact model identifier or percentage of AI-written code is asserted.
+The applicant chose Claude Code for feature reviews and reported that the bootstrap review completed with no changes requested. Codex has not inspected that review transcript. No exact model identifier or percentage of AI-written code is asserted.
 
 ## Applicant direction
 
@@ -81,6 +81,22 @@ These are observed planning contributions. They do not imply the applicant has r
 - Package/lock consistency, workflow YAML, Markdown links/fences, and `git diff --check` passed. The first auxiliary documentation-check attempt could not load Python's optional YAML module; the check was rerun successfully using the already installed JavaScript YAML parser, without adding a dependency.
 
 **Remaining verification and handoff:** The applicant requested ownership of opening the app and checking its interface. No successful browser or phone visual inspection is claimed. No Claude review, hosted CI run, or applicant code review has been claimed. The application was left running at `http://localhost:3000` for the applicant. The assistant has not staged, committed, or pushed any change.
+
+### Session 04 - Database foundation (first part of milestone 3)
+
+**Task given to AI:** Start the database/demo/import milestone, using multiple meaningful commits within one PR, with the applicant retaining all staging, commits, and pushes.
+
+**Starting evidence:** Read-only inspection found a clean `main` with the bootstrap merge `a2550d8`. The applicant reported Claude's bootstrap review complete with no changes requested. The assistant proposed `feat/data-imports` and is preparing only the first commit-sized part before demo data and imports.
+
+**Work performed:** Added a pinned stable Prisma/SQLite adapter, schema and migration with database CHECK constraints and composite foreign keys, a shared connection factory, startup migrations and persistent Docker volume, database readiness, and 15 real-database integration tests. Updated the container/CI build to run those tests and documented decisions D17–D18. This implements stored-data constraints, not authorization or complete quiz behavior.
+
+**Corrections from actual checks:** A missing SQLite file caused Prisma's migration deployment to fail with a generic schema-engine error, including outside the shell sandbox. A controlled comparison succeeded when an empty file already existed. The startup wrapper now creates the file without truncation; repeat-migration tests protect existing records. Invoking the `tsx` CLI hit a sandbox IPC restriction, so the scripts use Node's `--import tsx` loader without that unnecessary IPC listener. A Vitest config module-format warning was resolved by using an explicit `.mts` config file.
+
+**Dependency review:** npm audit initially reported four high-severity entries through Prisma's pinned config/MySQL packages. The assistant checked the advisories, reviewed Deepmerge 8's breaking changes and Prisma's actual configuration-loading call, then added scoped overrides (D19) instead of accepting an automatic major downgrade. Installation with the overrides reported zero vulnerabilities. Local lint/type checks, all 15 integration tests, and the production build passed with the patched dependencies.
+
+**Verification:** Prisma schema validation/generation, local lint/type checks, all 15 SQLite integration tests, and the production build passed with the final dependencies. The tests apply the actual migration to isolated temporary files and clean up only their own fixtures. The final Docker image repeated lint/type/build and all 15 tests. Compose became healthy after migrations; two HTTP smoke tests passed. A temporary database record survived a container restart, and the assistant removed that record afterward. A final npm audit reported zero vulnerabilities. These checks establish the database foundation and startup path, not the unfinished login/quiz/import flows. Hosted CI and visual behavior remain unverified here.
+
+**Scope boundary:** Sample accounts, seed idempotency, CSV/XLSX parsers/templates, and import transactions are the next two parts. No browser inspection, hosted CI run, or Claude review of this database change has been performed by this assistant. No staging, commit, push, or branch change has been performed.
 
 ## Implementation workflow
 

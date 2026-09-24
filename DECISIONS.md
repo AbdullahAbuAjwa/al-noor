@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Planning baseline: 2026-09-23. **Bootstrap is implemented and locally verified; business features remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
+Planning baseline: 2026-09-23. **Bootstrap is merged; the database foundation is locally verified. Demo data, imports, and user workflows remain pending.** Unless a result is explicitly recorded, verification items describe intended evidence, not passing tests.
 
 The assessment brief supplies product requirements; the applicant supplies additional preferences. This record distinguishes those from engineering assumptions. Accepted plans can change when implementation provides better evidence; record the reason rather than rewriting history to suggest the trade-off never existed.
 
@@ -184,6 +184,40 @@ Use a multi-stage Docker build and Next's standalone output. Explicitly copy bot
 
 **Trade-off / evidence:** The file must stay aligned with AGENTS.md and the agreed workflow. It guides behavior; it is not a technical permission boundary or evidence that a review happened. The applicant assesses findings, and actual review outcomes are recorded in AI_USAGE.md after review.
 
+## D17 - Database constraints and numeric representation
+
+**Context:** The import, quiz, and attempt services will share stored data. Uniqueness or relationship checks implemented only in application code can fail under concurrent writes or omitted validation.
+
+**Decision:** Use Prisma 7.10.0 with the matching local SQLite adapter; avoid the Prisma 8 release candidate exposed by the registry's latest CLI tag. Model users/classes, teacher assignments, sessions, quizzes/questions/options, attempts/answers, and a seed initialization record. Stable usernames and quiz codes are unique; Arabic names remain display values. Require canonical lowercase usernames and exactly one class for a student, with no student-class field on other roles.
+
+Enforce one attempt per student/quiz through a unique constraint. Composite foreign keys ensure an answer's question belongs to the attempt's quiz and its option belongs to that question. Store question points and final grades as integer hundredths of a point, and penalties as integer basis points (100 basis points = 1%). This avoids floating-point storage ambiguity. Bound duration to 1–180 minutes, question positions to 1–200, points to 0.01–1,000 per question, and penalties to 0–100%. These are documented MVP limits, not requirements from the brief. Final scoring/rounding behavior will be implemented and tested with grading.
+
+**Trade-off:** Named SQL CHECK constraints supplement Prisma's schema for role values, ranges, time ordering, and complete final-result fields. Prisma schema syntax does not represent these checks: future table-rebuild migrations must preserve them, and integration tests must run the real migrations rather than `db push`. Full publication validation (including exactly four populated options), cross-record role authorization, immutable publication, and deadline/finalization enforcement remain service responsibilities; the current schema does not claim to enforce those complete workflows.
+
+**Verification:** Real SQLite integration tests cover migration repeat-safety, persistence, foreign keys, raw invalid roles, invalid class assignment, duplicate usernames, concurrent attempts on two connections, cross-question/cross-quiz answers, bounded fields, and transaction rollback. Results are recorded in AI_USAGE.md.
+
+## D18 - Persistent storage and migration startup
+
+**Decision and reason:** Mount SQLite in a named Docker volume, apply only committed migrations at startup, and start the web server only if migration succeeds. The current Prisma deployment command failed on a missing SQLite file in local verification; the initialization wrapper now creates the parent directory and opens the file in append mode, creating it without truncating existing data. Tests exercise that wrapper on a new file and again after inserting records.
+
+The server and migration CLI use the same normalized file path. Application connections explicitly enable foreign keys and WAL mode, with a bounded 5-second busy timeout; SQLite still permits only one writer. Keep a single shared Prisma client per web process and short transactions. The readiness endpoint queries a real application table and returns 503 when that fails.
+
+**Trade-off:** Keep Prisma CLI and `tsx` in the runtime image so migrations and forthcoming seed/import commands use the same code and dependencies. This is a larger image than a minimal Next.js standalone bundle, but avoids a separate migration service or custom migration engine. Retain a non-root runtime user and verify write permissions on the named volume. Prisma Client is generated from the schema during checks/builds and is not committed.
+
+**Verification:** The final Docker image passed lint, type checking, 15 SQLite integration tests, and the production build. Compose reached healthy status after migration; both HTTP smoke tests passed. A temporary database record survived a container restart and was then removed. A new file and repeated migration were separately covered by the integration suite.
+
+**Sources:** [Prisma 7 SQLite](https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/sqlite) and [Prisma configuration](https://www.prisma.io/docs/orm/v7/reference/prisma-config-reference). These document the adapter/configuration; first-file behavior was verified locally rather than inferred from the documentation.
+
+## D19 - Scoped fixes for transitive dependency advisories
+
+**Context:** Installing Prisma 7.10.0 introduced four high-severity npm audit entries through its pinned `deepmerge-ts` and `mysql2` dependencies. The suggested automatic force-fix would downgrade Prisma across a major version. This application uses SQLite, not MySQL; Prisma configuration is trusted repository code, not request input. That limits exposure but does not remove the vulnerable packages from the shipped image.
+
+**Decision:** Pin narrowly scoped npm overrides to `deepmerge-ts` 8.0.0 under `@prisma/config` 7.10.0 and `mysql2` 3.24.4 under Prisma 7.10.0. Review the former's major-version changes: map-merging and custom type changes do not apply to our plain Prisma configuration. Re-run real configuration loading, client generation, migrations, tests, production build, and npm audit with the overrides. Do not run `npm audit fix --force` or suppress the advisories.
+
+**Trade-off:** These overrides step outside Prisma's pinned dependency versions and must be revisited when Prisma updates. Local and container verification cover the SQLite paths we use; they do not certify unrelated Prisma/MySQL features. Remove the overrides once upstream supplies compatible patched dependencies.
+
+**Sources:** [Deepmerge advisory](https://github.com/advisories/GHSA-ggr8-5vv4-36mx), [version 8 changes](https://github.com/RebeccaStevens/deepmerge-ts/releases/tag/v8.0.0), [MySQL authentication advisory](https://github.com/advisories/GHSA-3f6p-5ww8-9rcr), and [MySQL compression advisory](https://github.com/advisories/GHSA-rgwj-5xj2-c3m3). Actual verification outcomes are recorded in AI_USAGE.md.
+
 ## Scope beyond the brief
 
 English interface selection, an explicit administrator role, draft/publication workflow, answer autosave/recovery, and repeat-safe requests are planned additions or interpretations. Their reasons and costs are recorded above. An administrator creation form and browser spreadsheet upload remain prioritized enhancements, not implemented features.
@@ -201,7 +235,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 
 ## Unfinished work
 
-Bootstrap build/startup and HTTP smoke verification passed locally on Linux ARM64 through Docker Desktop. Applicant visual inspection, Claude review, and hosted CI execution remain pending. All business features and their tests remain unfinished, including persistent data, accounts, imports, quiz authoring, attempts, scoring, reports, and language switching. See [PLAN.md](PLAN.md) for the milestones and AI_USAGE.md for actual executed checks.
+Bootstrap is merged, and the applicant reported its Claude review complete. The database schema, migrations, and integration tests are implemented and locally verified in Docker. Demo accounts, imports, authentication, quiz authoring, attempts, scoring, reports, and language switching remain unfinished. Hosted CI results and visual checks have not been independently verified here. See [PLAN.md](PLAN.md) and AI_USAGE.md for actual executed checks.
 
 ## If another week were available
 

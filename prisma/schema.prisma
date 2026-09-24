@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+model Class {
+  id       String         @id @default(cuid())
+  name     String         @unique
+  students User[]
+  teachers TeacherClass[]
+  quizzes  QuizClass[]
+}
+
+model User {
+  id           String         @id @default(cuid())
+  username     String         @unique
+  name         String
+  passwordHash String
+  role         Role
+  classId      String?
+  class        Class?         @relation(fields: [classId], references: [id], onDelete: Restrict)
+  createdAt    DateTime       @default(now())
+  teaching     TeacherClass[]
+  quizzes      Quiz[]
+  attempts     Attempt[]
+  sessions     Session[]
+
+  @@index([classId])
+}
+
+model TeacherClass {
+  teacherId String
+  classId   String
+  teacher   User   @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  class     Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  @@id([teacherId, classId])
+  @@index([classId])
+}
+
+model Session {
+  tokenHash String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Quiz {
+  id              String      @id @default(cuid())
+  code            String      @unique
+  teacherId       String
+  title           String
+  status          QuizStatus  @default(DRAFT)
+  durationMinutes Int         @default(20)
+  opensAt         DateTime?
+  closesAt        DateTime?
+  penaltyBps      Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  teacher         User        @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  classes         QuizClass[]
+  questions       Question[]
+  attempts        Attempt[]
+
+  @@index([teacherId, status])
+}
+
+model QuizClass {
+  quizId  String
+  classId String
+  quiz    Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  @@id([quizId, classId])
+  @@index([classId])
+}
+
+model Question {
+  id                    String   @id @default(cuid())
+  quizId                String
+  position              Int
+  text                  String
+  pointsHundredths      Int
+  correctOptionPosition Int
+  quiz                  Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options               Option[]
+  answers               Answer[]
+
+  @@unique([quizId, position])
+  @@unique([id, quizId])
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  questionId String
+  position   Int
+  text       String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers    Answer[]
+
+  @@unique([questionId, position])
+  @@unique([id, questionId])
+}
+
+model Attempt {
+  id                 String        @id @default(cuid())
+  studentId          String
+  quizId             String
+  status             AttemptStatus @default(IN_PROGRESS)
+  startedAt          DateTime
+  deadlineAt         DateTime
+  finalizedAt        DateTime?
+  version            Int           @default(0)
+  scoreHundredths    Int?
+  maxScoreHundredths Int?
+  correctCount       Int?
+  incorrectCount     Int?
+  unansweredCount    Int?
+  student            User          @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  quiz               Quiz          @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  answers            Answer[]
+
+  @@unique([studentId, quizId])
+  @@unique([id, quizId])
+  @@index([quizId, status])
+}
+
+model Answer {
+  attemptId  String
+  questionId String
+  quizId     String
+  optionId   String
+  updatedAt  DateTime @updatedAt
+  attempt    Attempt  @relation(fields: [attemptId, quizId], references: [id, quizId], onDelete: Cascade)
+  question   Question @relation(fields: [questionId, quizId], references: [id, quizId], onDelete: Restrict)
+  option     Option   @relation(fields: [optionId, questionId], references: [id, questionId], onDelete: Restrict)
+
+  @@id([attemptId, questionId])
+  @@index([questionId, quizId])
+  @@index([optionId, questionId])
+}
+
+model SeedRun {
+  id            String   @id
+  initializedAt DateTime @default(now())
+}

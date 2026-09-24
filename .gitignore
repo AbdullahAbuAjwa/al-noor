@@ -5,6 +5,7 @@ out/
 dist/
 build/
 *.tsbuildinfo
+src/generated/prisma/
 
 # Test artifacts
 coverage/

@@ -4,7 +4,7 @@ Planning baseline: 2026-09-23. This document records intended work; unchecked it
 
 Project root: `al-noor/` inside the original assessment folder. The user performs all staging, commits, and pushes; the assistant prepares and verifies each change and suggests its commit subject. The user's personal Git author identity and effective GitHub authentication must be verified separately before delivery.
 
-Current progress: milestone 1 was committed by the applicant (`d8db05f`). Milestone 2 is implemented on `chore/bootstrap`: local lint/type checks, the production Docker build/startup, and two HTTP smoke checks passed. Applicant visual inspection and Claude review are pending before the applicant's commit/merge. No business features have been implemented.
+Current progress: bootstrap was merged into `main` in `a2550d8`. The applicant reported a completed Claude review with no changes requested. Milestone 3 is split into the three commit-sized parts below; the database foundation is implemented and locally verified, pending the applicant's first commit. Demo data and imports have not been implemented.
 
 ## Objective and source
 
@@ -79,6 +79,14 @@ Every feature milestone includes relevant tests and updates to DECISIONS.md and 
 Genuine fixes and scope changes get their own commits when appropriate. A milestone may be split into smaller coherent commits. Do not defer all testing to milestone 11 or all documentation to milestone 12. All commit subjects are handoff suggestions for the user, not authorization for the assistant to stage, commit, or push.
 
 ### Branch and review workflow
+
+Milestone 3 uses the proposed branch `feat/data-imports` and separate applicant-created commits:
+
+1. `feat: add SQLite schema, migrations and database constraints` — schema, persistent storage, automatic migrations, readiness check, and real-database tests.
+2. `feat: add repeat-safe demo data and sample accounts` — deterministic sample identities and content, password hashes, relative first-use availability, and seed repeat-safety tests.
+3. `feat: add validated CSV and XLSX imports` — documented templates, format readers, shared validation, transactional CLI import, and invalid-input/rollback tests.
+
+Hand off each verified part for a commit before starting the next, as the applicant owns staging and commits. Keep the PR open until all three parts are implemented and reviewed; the first part alone does not complete milestone 3.
 
 Use one short-lived branch at a time, starting from the updated `main` after the previous feature is merged. Keep coherent intermediate commits; a feature branch need not contain only one commit. The first implementation branch is `chore/bootstrap` for milestone 2 only.
 

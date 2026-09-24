@@ -6,17 +6,25 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
-    "build": "next build",
+    "dev": "prisma generate && next dev --hostname 127.0.0.1",
+    "build": "prisma generate && next build",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
-    "test:smoke": "node --test scripts/smoke.test.mjs"
+    "test:smoke": "node --test scripts/smoke.test.mjs",
+    "test": "prisma generate && vitest run",
+    "db:generate": "prisma generate",
+    "db:migrate": "node --import tsx scripts/migrate.ts"
   },
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "7.10.0",
+    "@prisma/client": "7.10.0",
     "next": "16.3.6",
+    "prisma": "7.10.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1",
+    "tsx": "4.23.15"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
@@ -24,6 +32,15 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.6",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "5.0.1"
+  },
+  "overrides": {
+    "@prisma/config@7.10.0": {
+      "deepmerge-ts": "8.0.0"
+    },
+    "prisma@7.10.0": {
+      "mysql2": "3.24.4"
+    }
   }
 }

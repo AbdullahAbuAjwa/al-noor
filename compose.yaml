@@ -2,6 +2,8 @@ services:
   app:
     build: .
     init: true
+    volumes:
+      - app-data:/app/data
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     healthcheck:
@@ -14,3 +16,6 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 3
+
+volumes:
+  app-data:
