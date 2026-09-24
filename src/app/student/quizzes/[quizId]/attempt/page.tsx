@@ -82,7 +82,7 @@ export default async function AttemptPage({
               </p>
               {view.result ? (
                 <>
-                  <p className="result-score" dir="ltr">
+                  <p className="result-score" dir={locale === "ar" ? "rtl" : "ltr"}>
                     {copy.results.scoreValue(
                       formatHundredths(view.result.scoreHundredths),
                       formatHundredths(view.result.maxScoreHundredths),

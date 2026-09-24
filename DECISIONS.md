@@ -363,7 +363,7 @@ GitHub CI and persistent Claude review instructions are delivery-workflow additi
 - No administrator form for accounts, no browser upload for CSV/XLSX (the command-line importer works), and no result export: the three optional enhancements in PLAN.md.
 - No password change or recovery; login throttling does not cap concurrent password checks across usernames (D23).
 - Published quizzes cannot be corrected or unpublished (D04).
-- Not verified here: GitHub branch protection, a hosted CI run, behavior behind an HTTPS proxy, load with many simultaneous students, and screen-reader use. Browser, phone, and visual checks were performed by the applicant, not by the AI tools.
+- Not verified here: GitHub branch protection, a hosted CI run, behavior behind an HTTPS proxy, load with many simultaneous students, and screen-reader use. Browser, phone, and visual checks belong to the applicant; no result is claimed here without a recorded check.
 
 ## If another week were available
 

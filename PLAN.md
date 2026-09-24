@@ -134,9 +134,9 @@ Reserve the final 90-120 minutes of available work for verification and document
 - [x] Build, type checking, linting, and implemented automated suites pass.
 - [x] The startup command works from tracked files with fresh storage and without personal credentials.
 - [x] Sample student, teacher, and administrator accounts work and their scopes are verified.
-- [ ] CSV and XLSX examples are loadable; restart behavior preserves results.
+- [x] CSV and XLSX examples are loadable; restart behavior preserves results.
 - [ ] Main journeys work in Arabic and English on phone and desktop layouts.
-- [ ] README instructions and credentials are accurate; decision and AI-use records reflect actual work.
+- [x] README instructions and credentials are accurate; decision and AI-use records reflect actual work.
 - [x] Unfinished work and next-week priorities are explicit.
 - [ ] Source and progressive commits are in the public repository before its link is submitted.
 

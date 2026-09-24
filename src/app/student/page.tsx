@@ -82,7 +82,7 @@ export default async function StudentHomePage() {
                   {quiz.score ? (
                     <p className="summary-line" dir="auto">
                       {copy.results.score}:{" "}
-                      <span dir="ltr">
+                      <span dir={locale === "ar" ? "rtl" : "ltr"}>
                         {copy.results.scoreValue(
                           formatHundredths(quiz.score.scoreHundredths),
                           formatHundredths(quiz.score.maxScoreHundredths),

@@ -267,6 +267,12 @@ These are observed planning contributions. They do not imply the applicant has r
 
 **Verification actually performed:** The committed `main` (`4ac9e8c`) was exported with `git archive` into an empty directory outside the repository, so only tracked files were present, and started with its own Compose project and a new volume. The image build ran lint/type checks, all 139 tests, and the production build; the container became healthy and logged "Demo data initialized." With `SMOKE_WRITES=1`, all 18 HTTP smoke tests passed (sign-in, roles, authoring, publishing, starting, answering, submitting, results). After `docker compose restart`, health returned ok, the log showed no pending migrations and "existing records preserved", and the database still held 7 submitted attempts (6 seeded plus the smoke test's) and one seed marker. The project and its volume were then removed. Not verified: a hosted CI run, other operating systems or CPU architectures than Docker Desktop on this Mac, and browser/phone behavior (the applicant's checks).
 
+### Session 23 - Codex final reviewer-documentation audit
+
+**Direction and work:** With the core merged and a short submission window remaining, the applicant asked ChatGPT Codex for a focused audit of the reviewer guide, one-command startup, sample credentials, and decision/AI-use records. Codex compared the current documentation with the Compose/Docker setup, seed credentials, committed templates, import tests, and the previous clean-checkout record. It corrected stale README wording about the imported-draft workflow, testing status, and Claude instructions; made the publication walkthrough's sample window concrete; and aligned the final decision/plan status with recorded evidence.
+
+**Verification:** This pass changed documentation only. No new build, Docker run, browser check, or hosted CI result is claimed; the clean-checkout and test evidence above remains the last executed runtime verification. The applicant retains staging, commit, push, PR, visual review, and submission actions.
+
 ## Implementation workflow
 
 For each substantial feature, record:

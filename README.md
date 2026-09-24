@@ -1,6 +1,6 @@
 # مركز النور التعليمي | Al Noor Educational Center
 
-A web application being built for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
+A web application for a tutoring center to publish timed quizzes, let students complete one attempt, and review results. Prepared for the byThursday practical assessment.
 
 **Status: core delivery complete.** Students sign in, take a timed multiple-choice quiz on a phone, and see their score; teachers create, edit, and publish quizzes for their own classes and see their students' results; the centre administrator sees results across the centre. The interface is Arabic by default with English, data persists in SQLite, sample data loads on first start, and CSV/XLSX imports load real rosters and quizzes. Known limitations are listed at the end.
 
@@ -56,7 +56,7 @@ For an already migrated local database, `npm run db:seed` initializes the same s
 
 ## Importing CSV or Excel data
 
-The repository includes matching [CSV and XLSX templates](templates) for `teachers`, `students`, and `quiz`. Choose **one format per import**; importing both copies of the same template correctly fails as a duplicate. The example files use new identifiers, so you can import `teachers`, then `students`, then `quiz` into a freshly seeded database. An imported quiz is a **draft** and cannot be attempted until a later authoring flow validates and publishes it.
+The repository includes matching [CSV and XLSX templates](templates) for `teachers`, `students`, and `quiz`. Choose **one format per import**; importing both copies of the same template correctly fails as a duplicate. The example files use new identifiers, so you can import `teachers`, then `students`, then `quiz` into a freshly seeded database. An imported quiz is a **draft**: its teacher can open it in the application, complete any required settings, and publish it before students can attempt it.
 
 With Docker running, for example:
 
@@ -104,14 +104,14 @@ Local development defaults to `.data/al-noor.db`, which is ignored by Git and se
 
 Installed: Next.js 16.3.6, React 19.3.0, TypeScript 5.9.3, and ESLint 9.39.5, using Node.js 24.19.0 in Docker. Direct versions and `package-lock.json` are repository inputs to `npm ci`; the base image is pinned by its multi-platform digest. ESLint 9 produces an upstream support warning; it is temporarily retained because the current React/accessibility plugins do not support ESLint 10 (see decision D14).
 
-The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 runs real-database integration tests. Prisma 7 was chosen over the registry's Prisma 8 release candidate. Scoped transitive dependency overrides address the audit findings documented in decision D19. The runtime also includes Prisma CLI and `tsx` to run the same migration/import code locally and in the container. CSV uses `csv-parse`; XLSX uses `read-excel-file`, with `fflate` for archive limits and unsupported-cell checks. `write-excel-file` is a development-only template generator. Zod, Tailwind CSS, and Playwright remain planned for later features.
+The database uses Prisma 7.10.0 with its matching SQLite adapter; Vitest 5.0.1 runs real-database integration tests. Prisma 7 was chosen over the registry's Prisma 8 release candidate. Scoped transitive dependency overrides address the audit findings documented in decision D19. The runtime also includes Prisma CLI and `tsx` to run the same migration/import code locally and in the container. CSV uses `csv-parse`; XLSX uses `read-excel-file`, with `fflate` for archive limits and unsupported-cell checks. `write-excel-file` is a development-only template generator. Browser-level Playwright tests remain future work.
 
 ## Reviewer walkthrough (about 10 minutes)
 
 1. Run `docker compose up --build` and open http://localhost:3000.
 2. Sign in as `student.10a.01` / `StudentDemo2026!`, open the math quiz, read the rules, and **Start quiz**.
 3. Answer a few questions (each saves immediately), refresh the page or sign out and back in: the same attempt, answers, and deadline return. Then **Submit quiz** and read the score.
-4. Sign in as `teacher.math` / `TeacherDemo2026!`: the math quiz shows that result next to the seeded ones and the students who have not started. Create a **New quiz**, add questions, and **Publish** it for 10A or 10B.
+4. Sign in as `teacher.math` / `TeacherDemo2026!`: the math quiz shows that result next to the seeded ones and the students who have not started. Create a **New quiz**, add questions, and **Publish** it for 10A or 10B. To make it available immediately, set the opening five minutes ago and the closing at least the quiz duration plus ten minutes from now (both in Amman time).
 5. Sign in as that class's student again: the new quiz is listed with its window.
 6. Sign in as `admin` / `AdminDemo2026!` to see centre totals and every published quiz's results.
 7. Switch to English, and try a phone-width window.
@@ -141,7 +141,7 @@ The GitHub Actions workflow repeats the container build and HTTP smoke checks on
 
 Risk-based unit, integration, smoke, and eventually E2E tests help catch incorrect or unsafe AI-assisted changes; they supplement source review rather than guarantee security. This repository currently has database integration tests and production HTTP smoke checks; complete-journey E2E tests remain planned. The applicant is the sole human reviewer and merger. Requiring PRs and passing checks through GitHub protection of `main` is planned but has **not** been configured or verified yet (decision D22).
 
-Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz unit/integration tests and full user-journey E2E tests will arrive with their features; see the [test strategy](PLAN.md#verification-strategy).
+Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz unit/integration tests and HTTP journey smoke checks are included; full browser-level E2E tests remain future work. See the [test strategy](PLAN.md#verification-strategy).
 
 ## Project references
 
@@ -149,7 +149,7 @@ Actual verification results are recorded in [AI_USAGE.md](AI_USAGE.md). Quiz uni
 - [Decisions, assumptions, trade-offs, and omissions](DECISIONS.md)
 - [Actual AI use and verification record](AI_USAGE.md)
 - [Repository instructions for coding agents](AGENTS.md)
-- [Claude Code review instructions](CLAUDE.md)
+- [Claude Code project instructions](CLAUDE.md)
 
 ## Current limitations
 
