@@ -824,8 +824,91 @@ test(
       assert.equal(cleared.status, 200);
       html = await (await request(page, { headers: { cookie } })).text();
       for (const choice of [1, 2, 3, 4]) {
-        assert.ok(!checked(html, `demo-option-math-10a-demo-1-${choice}`), "cleared");
+        assert.ok(
+          !checked(html, `demo-option-math-10a-demo-1-${choice}`),
+          "cleared",
+        );
       }
+    } finally {
+      await signOut(cookie);
+    }
+  },
+);
+
+test("results are shown to the owner and the administrator only", async () => {
+  const math = await signIn("teacher.math", "TeacherDemo2026!");
+  const science = await signIn("teacher.science", "TeacherDemo2026!");
+  const admin = await signIn("admin", "AdminDemo2026!");
+  const tenB = await signIn("student.10b.01", "StudentDemo2026!");
+  try {
+    const own = await (
+      await request("/teacher/quizzes/demo-quiz-math-10a-demo", {
+        headers: { cookie: math },
+      })
+    ).text();
+    assert.match(own, /id="results"/);
+    const centre = await request("/admin/quizzes/demo-quiz-math-10a-demo", {
+      headers: { cookie: admin },
+    });
+    assert.equal(centre.status, 200);
+    assert.match(await centre.text(), /id="results"/);
+    const teacherToAdmin = await request(
+      "/admin/quizzes/demo-quiz-math-10a-demo",
+      {
+        headers: { cookie: science },
+        redirect: "manual",
+      },
+    );
+    assert.equal(teacherToAdmin.status, 307);
+    const submit = await postForm(
+      "/api/student/quizzes/demo-quiz-math-10a-demo/submit",
+      {},
+      { cookie: tenB },
+    );
+    assert.equal(submit.status, 404, "no attempt, no submission");
+  } finally {
+    await Promise.all([math, science, admin, tenB].map(signOut));
+  }
+});
+
+test(
+  "submitting grades the attempt and freezes it",
+  { skip: !allowWrites },
+  async () => {
+    // student.10a.04 started and answered in the earlier write tests.
+    const cookie = await signIn("student.10a.04", "StudentDemo2026!");
+    const quiz = "demo-quiz-math-10a-demo";
+    try {
+      const submitted = await postForm(
+        `/api/student/quizzes/${quiz}/submit`,
+        {},
+        { cookie },
+      );
+      assert.equal(
+        submitted.headers.get("location"),
+        `/student/quizzes/${quiz}/attempt`,
+      );
+      const page = await (
+        await request(`/student/quizzes/${quiz}/attempt`, {
+          headers: { cookie },
+        })
+      ).text();
+      assert.match(page, /class="result-score"/);
+      const late = await postForm(
+        `/api/student/quizzes/${quiz}/answers`,
+        {
+          questionId: "demo-question-math-10a-demo-1",
+          optionId: "demo-option-math-10a-demo-1-1",
+        },
+        { cookie, accept: "application/json" },
+      );
+      assert.equal(late.status, 409);
+      const again = await postForm(
+        `/api/student/quizzes/${quiz}/submit`,
+        {},
+        { cookie },
+      );
+      assert.equal(again.status, 303, "a repeated submission is harmless");
     } finally {
       await signOut(cookie);
     }

@@ -8,6 +8,7 @@ import { getLocale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { pickMessage } from "@/i18n/pick";
 import { getAttemptView } from "@/server/attempts/attempts";
+import { expireOverdueAttempts } from "@/server/attempts/grading";
 import { requireRole } from "@/server/auth/current-user";
 import { getDatabase } from "@/server/db";
 
@@ -22,7 +23,11 @@ export default async function AttemptPage({
   const quizPage = `/student/quizzes/${encodeURIComponent(quizId)}`;
   const user = await requireRole("STUDENT", `${quizPage}/attempt`);
   // Only the signed-in student's own attempt is ever loaded.
-  const view = await getAttemptView(await getDatabase(), user.id, quizId, new Date());
+  const db = await getDatabase();
+  const now = new Date();
+  // An attempt past its deadline is graded from its saved answers on sight.
+  await expireOverdueAttempts(db, { studentId: user.id, quizId }, now);
+  const view = await getAttemptView(db, user.id, quizId, now);
   if (!view) redirect(quizPage);
 
   const locale = await getLocale();
@@ -66,12 +71,39 @@ export default async function AttemptPage({
             </p>
           ) : null}
           {!active ? (
-            <section className="card">
+            <section className="card" aria-labelledby="result-title">
+              <h2 id="result-title">{copy.results.title}</h2>
               <p className="notice notice--info">
-                {view.status === "IN_PROGRESS"
-                  ? copy.attempt.timeOver
-                  : copy.attempt.finished}
+                {view.status === "EXPIRED"
+                  ? copy.results.expired
+                  : view.status === "SUBMITTED"
+                    ? copy.results.submitted
+                    : copy.attempt.timeOver}
               </p>
+              {view.result ? (
+                <>
+                  <p className="result-score" dir="ltr">
+                    {copy.results.scoreValue(
+                      formatHundredths(view.result.scoreHundredths),
+                      formatHundredths(view.result.maxScoreHundredths),
+                    )}
+                  </p>
+                  <dl className="facts">
+                    <div>
+                      <dt>{copy.results.correct}</dt>
+                      <dd>{view.result.correctCount}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.results.incorrect}</dt>
+                      <dd>{view.result.incorrectCount}</dd>
+                    </div>
+                    <div>
+                      <dt>{copy.results.unanswered}</dt>
+                      <dd>{view.result.unansweredCount}</dd>
+                    </div>
+                  </dl>
+                </>
+              ) : null}
             </section>
           ) : (
             <ol className="attempt-questions">
@@ -106,6 +138,20 @@ export default async function AttemptPage({
               ))}
             </ol>
           )}
+          {active ? (
+            <section className="card" id="submit" aria-labelledby="submit-title">
+              <h2 id="submit-title">{copy.results.submitTitle}</h2>
+              <p className="muted">{copy.results.submitNote}</p>
+              <form
+                action={`/api/student/quizzes/${encodeURIComponent(quizId)}/submit`}
+                method="post"
+              >
+                <button type="submit" className="button button--primary">
+                  {copy.results.submit}
+                </button>
+              </form>
+            </section>
+          ) : null}
           <p className="back-link">
             <Link href="/student">{copy.attempt.back}</Link>
           </p>

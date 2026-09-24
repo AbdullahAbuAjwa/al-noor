@@ -162,6 +162,14 @@ export type AttemptView = {
   quiz: { id: string; title: string; penaltyBps: number };
   // Saved selections by question id; only server-acknowledged answers.
   answers: Record<string, string>;
+  // Present once the attempt is submitted or expired.
+  result: {
+    scoreHundredths: number;
+    maxScoreHundredths: number;
+    correctCount: number;
+    incorrectCount: number;
+    unansweredCount: number;
+  } | null;
   questions: {
     id: string;
     position: number;
@@ -187,6 +195,11 @@ export async function getAttemptView(
       startedAt: true,
       deadlineAt: true,
       answers: { select: { questionId: true, optionId: true } },
+      scoreHundredths: true,
+      maxScoreHundredths: true,
+      correctCount: true,
+      incorrectCount: true,
+      unansweredCount: true,
       quiz: {
         select: {
           id: true,
@@ -223,6 +236,16 @@ export async function getAttemptView(
     answers: Object.fromEntries(
       attempt.answers.map((answer) => [answer.questionId, answer.optionId]),
     ),
+    result:
+      attempt.status !== "IN_PROGRESS" && attempt.scoreHundredths !== null
+        ? {
+            scoreHundredths: attempt.scoreHundredths,
+            maxScoreHundredths: attempt.maxScoreHundredths ?? 0,
+            correctCount: attempt.correctCount ?? 0,
+            incorrectCount: attempt.incorrectCount ?? 0,
+            unansweredCount: attempt.unansweredCount ?? 0,
+          }
+        : null,
     questions,
   };
 }

@@ -13,6 +13,7 @@ export type StudentQuizSummary = {
   questionCount: number;
   availability: Availability;
   attemptStatus: AttemptStatus | null;
+  score: { scoreHundredths: number; maxScoreHundredths: number } | null;
 };
 
 // A student sees only published quizzes assigned to their own class.
@@ -37,7 +38,14 @@ export async function listStudentQuizzes(
       penaltyBps: true,
       teacher: { select: { name: true } },
       _count: { select: { questions: true } },
-      attempts: { where: { studentId: student.id }, select: { status: true } },
+      attempts: {
+        where: { studentId: student.id },
+        select: {
+          status: true,
+          scoreHundredths: true,
+          maxScoreHundredths: true,
+        },
+      },
     },
   });
   return quizzes.flatMap((quiz) => {
@@ -55,6 +63,14 @@ export async function listStudentQuizzes(
         questionCount: quiz._count.questions,
         availability: quizAvailability(quiz.opensAt, quiz.closesAt, now),
         attemptStatus: quiz.attempts[0]?.status ?? null,
+        score:
+          quiz.attempts[0]?.scoreHundredths != null &&
+          quiz.attempts[0]?.maxScoreHundredths != null
+            ? {
+                scoreHundredths: quiz.attempts[0].scoreHundredths,
+                maxScoreHundredths: quiz.attempts[0].maxScoreHundredths,
+              }
+            : null,
       },
     ];
   });
